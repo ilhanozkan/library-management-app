@@ -1,0 +1,64 @@
+package com.ilhanozkan.libraryManagementSystem.model.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "borrowings")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class Borrowing {
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
+
+  @ManyToOne
+  @JoinColumn(name = "book_id", nullable = false)
+  private Book book;
+
+  @ManyToOne
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
+  @CreatedDate
+  @Column(nullable = false)
+  private LocalDateTime borrowDate;
+
+  @Column(nullable = false)
+  private LocalDateTime dueDate;
+
+  @Column
+  private LocalDateTime returnDate;
+
+  @Column(nullable = false)
+  private Boolean returned;
+
+  @Column(nullable = false)
+  private LocalDateTime updatedAt;
+
+  // Expiration duration (days)
+  int expirationDuration = 14;
+
+  @PrePersist
+  public void onCreate() {
+    if (this.id == null)
+      this.id = UUID.randomUUID();
+
+    if (borrowDate == null)
+      borrowDate = LocalDateTime.now();
+
+    // Set default due date to 14 days from now
+    if (dueDate == null)
+      dueDate = LocalDateTime.now().plusDays(expirationDuration);
+  }
+}

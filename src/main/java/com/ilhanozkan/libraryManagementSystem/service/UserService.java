@@ -1,0 +1,69 @@
+package com.ilhanozkan.libraryManagementSystem.service;
+
+import com.ilhanozkan.libraryManagementSystem.model.dto.request.UserRequestDTO;
+import com.ilhanozkan.libraryManagementSystem.model.dto.response.UserResponseDTO;
+import com.ilhanozkan.libraryManagementSystem.model.entity.User;
+import com.ilhanozkan.libraryManagementSystem.model.mapper.UserResponseDTOMapper;
+import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class UserService {
+  private final UserRepository userRepository;
+  private final UserResponseDTOMapper mapper = UserResponseDTOMapper.INSTANCE;
+
+  @Autowired
+  public UserService(UserRepository userRepository) {
+    this.userRepository = userRepository;
+  }
+
+  public List<UserResponseDTO> getUsers() {
+    List<User> users = userRepository.findAll();
+
+    return mapper.toUserResponseDTOList(users);
+  }
+
+  public UserResponseDTO getUserById(UUID id) {
+    return mapper.toUserResponseDTO(userRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("User with id " + id + " not found")));
+  }
+
+  public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
+    if (userRequestDTO.password() == null || userRequestDTO.password().isEmpty())
+      throw new RuntimeException("Password is required");
+
+    if (userRequestDTO.email() == null || userRequestDTO.email().isEmpty())
+      throw new RuntimeException("Email is required");
+
+    if (userRequestDTO.password().length() < 8)
+      throw new RuntimeException("Password length is required");
+
+    if (userRepository.existsByUsername(userRequestDTO.username()))
+      throw new RuntimeException("Username already exists");
+
+    if (userRepository.existsByEmail(userRequestDTO.email()))
+      throw new RuntimeException("Email already exists");
+
+    String hashedPassword = new BCryptPasswordEncoder().encode(userRequestDTO.password());
+
+    User savedUser = User.builder()
+        .name(userRequestDTO.name())
+        .surname(userRequestDTO.surname())
+        .password(hashedPassword)
+        .email(userRequestDTO.email())
+        .role(userRequestDTO.role())
+        .build();
+
+    return mapper.toUserResponseDTO(userRepository.save(savedUser));
+  }
+
+  public void deleteUser(UUID id) {
+    userRepository.deleteById(id);
+  }
+}
