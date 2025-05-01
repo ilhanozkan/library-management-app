@@ -7,7 +7,6 @@ import com.ilhanozkan.libraryManagementSystem.model.mapper.UserResponseDTOMapper
 import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,7 +41,7 @@ public class UserService {
       throw new RuntimeException("Email is required");
 
     if (userRequestDTO.password().length() < 8)
-      throw new RuntimeException("Password length is required");
+      throw new RuntimeException("Password length should be at least 8 characters");
 
     if (userRepository.existsByUsername(userRequestDTO.username()))
       throw new RuntimeException("Username already exists");
@@ -55,8 +54,9 @@ public class UserService {
     User savedUser = User.builder()
         .name(userRequestDTO.name())
         .surname(userRequestDTO.surname())
-        .password(hashedPassword)
+        .username(userRequestDTO.username())
         .email(userRequestDTO.email())
+        .password(hashedPassword)
         .role(userRequestDTO.role())
         .build();
 
