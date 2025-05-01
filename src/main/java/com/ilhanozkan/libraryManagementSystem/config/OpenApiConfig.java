@@ -19,7 +19,7 @@ public class OpenApiConfig {
   @Bean
   public OpenAPI customOpenAPI() {
     Server server = new Server()
-        .url("http://localhost:8080")
+        .url("http://localhost:8080/api/v1")
         .description("REST API - Development");
 
     Contact contact = new Contact()
