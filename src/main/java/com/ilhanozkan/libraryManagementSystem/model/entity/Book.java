@@ -1,5 +1,6 @@
 package com.ilhanozkan.libraryManagementSystem.model.entity;
 
+import com.ilhanozkan.libraryManagementSystem.model.enums.Genre;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
@@ -39,6 +40,9 @@ public class Book {
   @Column(nullable = false)
   @Min(0)
   private Integer quantity;
+
+  @Column(nullable = false)
+  private Genre genre;
 
   @PrePersist
   public void onCreate() {
