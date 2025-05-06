@@ -2,7 +2,7 @@ package com.ilhanozkan.libraryManagementSystem.controller;
 
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.UserRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.UserResponseDTO;
-import com.ilhanozkan.libraryManagementSystem.service.UserService;
+import com.ilhanozkan.libraryManagementSystem.service.impl.UserServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,10 +22,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-  private final UserService userService;
+  private final UserServiceImpl userService;
 
   @Autowired
-  public UserController(UserService userService) {
+  public UserController(UserServiceImpl userService) {
     this.userService = userService;
   }
 
@@ -51,18 +53,20 @@ public class UserController {
       summary = "Create a user",
       description = "Create a new user",
       responses = {
-          @ApiResponse(responseCode = "200", description = "User created successfully",
+          @ApiResponse(responseCode = "201", description = "User created successfully",
               content = @Content(mediaType = "application/json",
                   schema = @Schema(implementation = UserRequestDTO.class))),
           @ApiResponse(responseCode = "400", description = "User could not be created")
       }
   )
   @PostMapping
-  public UserResponseDTO createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
+  public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
     try {
-      return userService.createUser(userRequestDTO);
+      UserResponseDTO response = userService.createUser(userRequestDTO);
+
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (RuntimeException e) {
-      throw new RuntimeException(e.getMessage());
+      return ResponseEntity.badRequest().build();
     }
   }
 

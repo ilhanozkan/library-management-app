@@ -1,7 +1,7 @@
 package com.ilhanozkan.libraryManagementSystem.controller;
 
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BorrowingResponseDTO;
-import com.ilhanozkan.libraryManagementSystem.service.BorrowingService;
+import com.ilhanozkan.libraryManagementSystem.service.impl.BorrowingServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
@@ -15,10 +15,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/borrowings")
 public class BorrowingController {
-  private final BorrowingService borrowingService;
+  private final BorrowingServiceImpl borrowingService;
 
   @Autowired
-  public BorrowingController(BorrowingService borrowingService) {
+  public BorrowingController(BorrowingServiceImpl borrowingService) {
     this.borrowingService = borrowingService;
   }
 
