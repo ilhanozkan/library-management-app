@@ -11,4 +11,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
   @Override
   void deleteById(UUID uuid);
+
+  User findByUsername(String username);
 }

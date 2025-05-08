@@ -1,6 +1,6 @@
 package com.ilhanozkan.libraryManagementSystem.model.enums;
 
-public enum Genre {
+public enum BookGenre {
   ACTION,
   ADVENTURE,
   ANTHOLOGY,
