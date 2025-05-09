@@ -42,6 +42,10 @@ public class Book {
   private Integer quantity;
 
   @Column(nullable = false)
+  @Min(0)
+  private Integer availableQuantity;
+
+  @Column(nullable = false)
   private BookGenre bookGenre;
 
   @PrePersist
