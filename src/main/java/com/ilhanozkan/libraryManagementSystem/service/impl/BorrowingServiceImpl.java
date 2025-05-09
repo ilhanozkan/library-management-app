@@ -17,6 +17,7 @@ import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
 import com.ilhanozkan.libraryManagementSystem.service.BorrowingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -41,7 +42,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
   }
 
-  public BorrowingResponseDTO createBorrowing(BorrowingRequestDTO borrowingRequestDTO) {
+  public ResponseEntity<?> createBorrowing(BorrowingRequestDTO borrowingRequestDTO) {
     try {
       Book book = bookRepository.findById(borrowingRequestDTO.bookId()).orElseThrow(
           () -> new BookNotFound(borrowingRequestDTO.bookId())
@@ -63,9 +64,9 @@ public class BorrowingServiceImpl implements BorrowingService {
       borrowing.setBook(book);
       borrowing.setUser(user);
 
-      return mapper.toBorrowingResponseDTO(borrowingRepository.save(borrowing));
+      return ResponseEntity.ok(mapper.toBorrowingResponseDTO(borrowingRepository.save(borrowing)));
     } catch (RuntimeException e) {
-
+      return ResponseEntity.status(401).body("Invalid username or password");
     }
   }
 }
