@@ -30,8 +30,8 @@ public class WebSecurityConfig {
             .cors().disable()
             .authorizeHttpRequests(
                 auth -> auth
-                    .requestMatchers("/api/v1/auth/**").permitAll()
-                    .requestMatchers("/api/v1/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

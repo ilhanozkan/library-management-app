@@ -49,7 +49,10 @@ public class User {
     if (this.id == null)
       this.id = UUID.randomUUID();
 
-    if  (this.status == null)
+    if (this.status == null)
       this.status = UserStatus.ACTIVE;
+
+    if (this.role == null)
+      this.role = UserRole.PATRON;
   }
 }

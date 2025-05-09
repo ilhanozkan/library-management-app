@@ -1,23 +1,27 @@
 package com.ilhanozkan.libraryManagementSystem.security;
 
+import com.ilhanozkan.libraryManagementSystem.model.entity.User;
+import com.ilhanozkan.libraryManagementSystem.model.entity.UserPrincipal;
 import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
+@Service
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-
-  private UserRepository userRepository;
-
-  @Autowired
-  public CustomUserDetailsService(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
+  private final UserRepository userRepository;
 
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
     User user = userRepository.findByUsername(username);
+
+    if (user == null) {
+      throw new UsernameNotFoundException(username);
+    }
+
+    return new UserPrincipal(user);
   }
 }
