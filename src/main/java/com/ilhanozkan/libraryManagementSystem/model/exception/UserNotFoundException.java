@@ -2,8 +2,8 @@ package com.ilhanozkan.libraryManagementSystem.model.exception;
 
 import java.util.UUID;
 
-public class UserNotFound extends RuntimeException {
-  public UserNotFound(UUID id) {
+public class UserNotFoundException extends RuntimeException {
+  public UserNotFoundException(UUID id) {
     super("User with id " + id + " not found");
   }
 }

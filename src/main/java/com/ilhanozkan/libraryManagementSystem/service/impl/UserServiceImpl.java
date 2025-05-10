@@ -1,35 +1,60 @@
 package com.ilhanozkan.libraryManagementSystem.service.impl;
 
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.UserRequestDTO;
+import com.ilhanozkan.libraryManagementSystem.model.dto.response.PagedResponse;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.UserResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.entity.User;
+import com.ilhanozkan.libraryManagementSystem.model.enums.UserStatus;
+import com.ilhanozkan.libraryManagementSystem.model.exception.ResourceNotFoundException;
 import com.ilhanozkan.libraryManagementSystem.model.mapper.UserResponseDTOMapper;
 import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
 import com.ilhanozkan.libraryManagementSystem.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
   private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
   private final UserResponseDTOMapper mapper = UserResponseDTOMapper.INSTANCE;
 
-  @Autowired
-  public UserServiceImpl(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
+  public PagedResponse<UserResponseDTO> getUsers(Pageable pageable) {
+    Page<User> usersPage = userRepository.findAll(pageable);
+    List<UserResponseDTO> userResponseDTOs = mapper.toUserResponseDTOList(usersPage.getContent());
 
-  public List<UserResponseDTO> getUsers() {
-    return mapper.toUserResponseDTOList(userRepository.findAll());
+    return PagedResponse.<UserResponseDTO>builder()
+        .content(userResponseDTOs)
+        .page(usersPage.getNumber())
+        .size(usersPage.getSize())
+        .totalElements(usersPage.getTotalElements())
+        .totalPages(usersPage.getTotalPages())
+        .last(usersPage.isLast())
+        .build();
   }
 
   public UserResponseDTO getUserById(UUID id) {
     return mapper.toUserResponseDTO(userRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("User with id " + id + " not found")));
+        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id)));
+  }
+
+  @Transactional
+  public UserResponseDTO getUserByEmail(String email) {
+    Optional<User> user = userRepository.findByEmail(email);
+
+    if (user.isEmpty())
+      throw new ResourceNotFoundException("User", "email", email);
+
+    return mapper.toUserResponseDTO(user.get());
   }
 
   public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
@@ -48,7 +73,7 @@ public class UserServiceImpl implements UserService {
     if (userRepository.existsByEmail(userRequestDTO.email()))
       throw new RuntimeException("Email already exists");
 
-    String hashedPassword = new BCryptPasswordEncoder().encode(userRequestDTO.password());
+    String hashedPassword = passwordEncoder.encode(userRequestDTO.password());
 
     User savedUser = User.builder()
         .name(userRequestDTO.name())
@@ -62,7 +87,65 @@ public class UserServiceImpl implements UserService {
     return mapper.toUserResponseDTO(userRepository.save(savedUser));
   }
 
+  @Transactional
+  public UserResponseDTO updateUser(UUID id, UserRequestDTO userRequestDTO) throws BadRequestException {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+    // Check username uniqueness
+    if (userRequestDTO.username() != null && !userRequestDTO.username().equals(user.getUsername())) {
+      if (userRepository.existsByUsername(userRequestDTO.username()))
+        throw new BadRequestException("Username already exists");
+
+      user.setUsername(userRequestDTO.username());
+    }
+
+    // Check email uniqueness
+    if (userRequestDTO.email() != null && !userRequestDTO.email().equals(user.getEmail())) {
+      if (userRepository.existsByEmail(userRequestDTO.email()))
+        throw new BadRequestException("Email already exists");
+
+      user.setEmail(userRequestDTO.email());
+    }
+
+    // Update password if provided
+    if (userRequestDTO.password() != null)
+      user.setPassword(passwordEncoder.encode(userRequestDTO.password()));
+
+    // Update role if provided
+    if (userRequestDTO.role() != null)
+      user.setRole(userRequestDTO.role());
+
+    // Update user status
+    if (userRequestDTO.status() != null)
+      user.setStatus(userRequestDTO.status());
+
+    // Update member fields if provided
+    if (userRequestDTO.name() != null) {
+      user.setName(userRequestDTO.name());
+    }
+
+    if (userRequestDTO.surname() != null) {
+      user.setSurname(userRequestDTO.surname());
+    }
+
+    User updatedUser = userRepository.save(user);
+    return mapper.toUserResponseDTO(updatedUser);
+  }
+
+  @Transactional
   public void deleteUser(UUID id) {
-    userRepository.deleteById(id);
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+    userRepository.delete(user);
+  }
+
+  @Transactional
+  public UserResponseDTO deactivateUser(UUID id) {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+
+    user.setStatus(UserStatus.INACTIVE);
+    return mapper.toUserResponseDTO(userRepository.save(user));
   }
 }
