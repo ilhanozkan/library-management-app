@@ -25,6 +25,10 @@ public class Book {
   private String name;
 
   @Column(nullable = false)
+  // Validation for ISBN-13 format
+  @jakarta.validation.constraints.Pattern(
+      regexp = "^(978|979)\\d{10}$",
+      message = "ISBN must be in the format 978XXXXXXXXX or 979XXXXXXXXX")
   private String isbn;
 
   @Column(nullable = false)
@@ -46,7 +50,7 @@ public class Book {
   private Integer availableQuantity;
 
   @Column(nullable = false)
-  private BookGenre bookGenre;
+  private BookGenre genre;
 
   @PrePersist
   public void onCreate() {
@@ -58,6 +62,9 @@ public class Book {
 
     if (numberOfPages == null)
       numberOfPages = 0;
+      
+    if (availableQuantity == null)
+      availableQuantity = quantity;
   }
 }
 

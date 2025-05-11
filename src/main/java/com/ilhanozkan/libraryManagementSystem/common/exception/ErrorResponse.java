@@ -1,4 +1,4 @@
-package com.ilhanozkan.libraryManagementSystem.model.exception;
+package com.ilhanozkan.libraryManagementSystem.common.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

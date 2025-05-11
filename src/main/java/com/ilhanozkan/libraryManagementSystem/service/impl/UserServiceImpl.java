@@ -1,11 +1,12 @@
 package com.ilhanozkan.libraryManagementSystem.service.impl;
 
+import com.ilhanozkan.libraryManagementSystem.common.exception.user.UserNotFoundException;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.UserRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.PagedResponse;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.UserResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.entity.User;
 import com.ilhanozkan.libraryManagementSystem.model.enums.UserStatus;
-import com.ilhanozkan.libraryManagementSystem.model.exception.ResourceNotFoundException;
+import com.ilhanozkan.libraryManagementSystem.common.exception.ResourceNotFoundException;
 import com.ilhanozkan.libraryManagementSystem.model.mapper.UserResponseDTOMapper;
 import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
 import com.ilhanozkan.libraryManagementSystem.service.UserService;
@@ -44,7 +45,7 @@ public class UserServiceImpl implements UserService {
 
   public UserResponseDTO getUserById(UUID id) {
     return mapper.toUserResponseDTO(userRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id)));
+        .orElseThrow(() -> new UserNotFoundException(id)));
   }
 
   @Transactional
@@ -90,7 +91,7 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public UserResponseDTO updateUser(UUID id, UserRequestDTO userRequestDTO) throws BadRequestException {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        .orElseThrow(() -> new UserNotFoundException(id));
 
     // Check username uniqueness
     if (userRequestDTO.username() != null && !userRequestDTO.username().equals(user.getUsername())) {
@@ -136,14 +137,14 @@ public class UserServiceImpl implements UserService {
   @Transactional
   public void deleteUser(UUID id) {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        .orElseThrow(() -> new UserNotFoundException(id));
     userRepository.delete(user);
   }
 
   @Transactional
   public UserResponseDTO deactivateUser(UUID id) {
     User user = userRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        .orElseThrow(() -> new UserNotFoundException(id));
 
     user.setStatus(UserStatus.INACTIVE);
     return mapper.toUserResponseDTO(userRepository.save(user));

@@ -31,9 +31,6 @@ public class AuthController {
       return ResponseEntity.ok(authService.register(requestDTO));
     } catch (RuntimeException e) {
       return ResponseEntity.badRequest().body(e.getMessage());
-
-    } catch (BadRequestException e) {
-      throw new BadRequestException(e);
     }
   }
 

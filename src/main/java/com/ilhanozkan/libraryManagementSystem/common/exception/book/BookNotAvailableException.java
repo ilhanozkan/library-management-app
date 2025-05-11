@@ -1,4 +1,4 @@
-package com.ilhanozkan.libraryManagementSystem.model.exception;
+package com.ilhanozkan.libraryManagementSystem.common.exception.book;
 
 import java.util.UUID;
 
