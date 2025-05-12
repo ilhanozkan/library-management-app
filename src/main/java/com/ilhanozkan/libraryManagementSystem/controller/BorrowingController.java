@@ -69,7 +69,7 @@ public class BorrowingController {
     try {
       return ResponseEntity.ok(borrowingService.createBorrowing(borrowingRequestDTO));
     } catch (RuntimeException e) {
-      return ResponseEntity.badRequest().build();
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
 

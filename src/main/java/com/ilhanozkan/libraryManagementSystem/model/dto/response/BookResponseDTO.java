@@ -12,6 +12,7 @@ public record BookResponseDTO(
     String publisher,
     Integer numberOfPages,
     Integer quantity,
+    Integer availableQuantity,
     BookGenre genre
 ) {
 }

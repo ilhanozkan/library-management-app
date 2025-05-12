@@ -1,5 +1,6 @@
 package com.ilhanozkan.libraryManagementSystem.service;
 
+import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpdateDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.PagedResponse;
@@ -16,5 +17,6 @@ public interface BookService {
   public BookResponseDTO createBook(BookRequestDTO bookRequestDTO);
   public BookResponseDTO updateBook(UUID id, BookRequestDTO bookRequestDTO);
   public void updateBookQuantity(UUID id, int change);
+  public BookResponseDTO updateBookAvailableQuantity(UUID id, BookQuantityUpdateDTO quantityUpdateDTO);
   public void deleteBook(UUID id);
 }

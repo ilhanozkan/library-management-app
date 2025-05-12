@@ -1,5 +1,6 @@
 package com.ilhanozkan.libraryManagementSystem.controller;
 
+import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpdateDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
@@ -132,6 +133,27 @@ public class BookController {
             return ResponseEntity.ok(bookService.updateBook(id, bookDetails));
         } catch (RuntimeException e) {
             log.error("Error updating book with ID {}", id, e);
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @Operation(summary = "Update book available quantity", description = "Updates only the available quantity of an existing book")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully updated book quantity"),
+        @ApiResponse(responseCode = "404", description = "Book not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input or quantity exceeds total quantity")
+    })
+    @PutMapping("/{id}/available-quantity")
+    public ResponseEntity<?> updateBookAvailableQuantity(
+            @Parameter(description = "ID of the book to update") @PathVariable UUID id,
+            @Parameter(description = "New available quantity") @Valid @RequestBody BookQuantityUpdateDTO quantityUpdateDTO) {
+        try {
+            return ResponseEntity.ok(bookService.updateBookAvailableQuantity(id, quantityUpdateDTO));
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid quantity update for book with ID {}: {}", id, e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            log.error("Error updating book quantity with ID {}", id, e);
             return ResponseEntity.notFound().build();
         }
     }

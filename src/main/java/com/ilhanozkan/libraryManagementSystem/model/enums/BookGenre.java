@@ -37,6 +37,7 @@ public enum BookGenre {
   MYTHOLOGY,
   NEW_ADULT,
   NON_FICTION,
+  OTHER,
   PARANORMAL,
   PHILOSOPHY,
   POETRY,

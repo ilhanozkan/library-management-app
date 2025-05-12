@@ -2,6 +2,7 @@ package com.ilhanozkan.libraryManagementSystem.service.impl;
 
 import com.ilhanozkan.libraryManagementSystem.common.exception.book.BookNotFoundException;
 import com.ilhanozkan.libraryManagementSystem.common.exception.book.NotEnoughBooksAvailableException;
+import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpdateDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BorrowingResponseDTO;
@@ -125,6 +126,24 @@ public class BookServiceImpl implements BookService {
 
     book.setAvailableQuantity(newQuantity);
     bookRepository.save(book);
+  }
+
+  @Transactional
+  public BookResponseDTO updateBookAvailableQuantity(UUID id, BookQuantityUpdateDTO quantityUpdateDTO) {
+    Book book = findBookById(id);
+    
+    // Validate that the available quantity is not greater than total quantity
+    if (quantityUpdateDTO.getAvailableQuantity() > book.getQuantity()) {
+      throw new IllegalArgumentException("Available quantity cannot exceed total quantity");
+    }
+    
+    // Validate that the available quantity is not negative
+    if (quantityUpdateDTO.getAvailableQuantity() < 0) {
+      throw new IllegalArgumentException("Available quantity cannot be negative");
+    }
+    
+    book.setAvailableQuantity(quantityUpdateDTO.getAvailableQuantity());
+    return mapper.toBookResponseDTO(bookRepository.save(book));
   }
 
   @Transactional

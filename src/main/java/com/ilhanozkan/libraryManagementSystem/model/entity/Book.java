@@ -66,5 +66,31 @@ public class Book {
     if (availableQuantity == null)
       availableQuantity = quantity;
   }
+
+  @PreUpdate
+  public void onUpdate() {
+    if (availableQuantity == null)
+      availableQuantity = quantity;
+    if (availableQuantity > quantity)
+      availableQuantity = quantity;
+    if (availableQuantity < 0)
+      availableQuantity = 0;
+    if (quantity < 0)
+      quantity = 0;
+    if (numberOfPages < 0)
+      numberOfPages = 0;
+    if (name == null)
+      name = "";
+    if (isbn == null)
+      isbn = "";
+    if (author == null)
+      author = "";
+    if (publisher == null)
+      publisher = "";
+    if (genre == null)
+      genre = BookGenre.OTHER;
+    if (isbn.length() != 13)
+      throw new IllegalArgumentException("ISBN must be 13 characters long");
+  }
 }
 
