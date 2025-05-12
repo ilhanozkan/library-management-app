@@ -28,7 +28,7 @@ public class Book {
   // Validation for ISBN-13 format
   @jakarta.validation.constraints.Pattern(
       regexp = "^(978|979)\\d{10}$",
-      message = "ISBN must be in the format 978XXXXXXXXX or 979XXXXXXXXX")
+      message = "ISBN must be in the format 978XXXXXXXXXX or 979XXXXXXXXXX")
   private String isbn;
 
   @Column(nullable = false)

@@ -1,5 +1,7 @@
 package com.ilhanozkan.libraryManagementSystem.model.dto.response;
 
+import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
+
 import java.util.UUID;
 
 public record BookResponseDTO(
@@ -9,6 +11,7 @@ public record BookResponseDTO(
     String author,
     String publisher,
     Integer numberOfPages,
-    Integer quantity
+    Integer quantity,
+    BookGenre genre
 ) {
 }

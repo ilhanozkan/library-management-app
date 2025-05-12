@@ -10,15 +10,16 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BookRepository extends JpaRepository<Book, UUID> {
-  @Query("SELECT b FROM Book b WHERE " +
-         "(:title IS NULL OR LOWER(b.name) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
-         "(:author IS NULL OR LOWER(b.author) LIKE LOWER(CONCAT('%', :author, '%'))) AND " +
-         "(:isbn IS NULL OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :isbn, '%'))) AND " +
-         "(:genre IS NULL OR b.genre = :genre)")
+  @Query(value = "SELECT * FROM books b WHERE " +
+         "(:title IS NULL OR b.name ILIKE CONCAT('%', :title, '%')) AND " +
+         "(:author IS NULL OR b.author ILIKE CONCAT('%', :author, '%')) AND " +
+         "(:isbn IS NULL OR b.isbn ILIKE CONCAT('%', :isbn, '%')) AND " +
+         "(:genre IS NULL OR b.genre::text = :genre)",
+         nativeQuery = true)
   List<Book> searchBooks(@Param("title") String title, 
                          @Param("author") String author, 
                          @Param("isbn") String isbn, 
-                         @Param("genre") BookGenre genre);
+                         @Param("genre") String genre);
   
   Book findByIsbn(String isbn);
 }

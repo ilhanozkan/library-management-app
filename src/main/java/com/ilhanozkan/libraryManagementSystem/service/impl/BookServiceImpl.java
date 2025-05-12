@@ -52,18 +52,19 @@ public class BookServiceImpl implements BookService {
       return mapper.toBookResponseDTOList(bookRepository.findAll());
     }
     
-    // Convert genre string to BookGenre enum if provided
-    BookGenre genreEnum = null;
+    // Convert genre string to enum ordinal value if provided
+    String genreValue = null;
     if (genre != null && !genre.trim().isEmpty()) {
       try {
-        genreEnum = BookGenre.valueOf(genre.toUpperCase());
+        BookGenre genreEnum = BookGenre.valueOf(genre.toUpperCase());
+        genreValue = String.valueOf(genreEnum.ordinal());
       } catch (IllegalArgumentException e) {
         // Invalid genre provided, will return empty list
         return List.of();
       }
     }
     
-    return mapper.toBookResponseDTOList(bookRepository.searchBooks(title, author, isbn, genreEnum));
+    return mapper.toBookResponseDTOList(bookRepository.searchBooks(title, author, isbn, genreValue));
   }
 
   private Book findBookById(UUID id) {
