@@ -18,11 +18,19 @@ import com.ilhanozkan.libraryManagementSystem.repository.BorrowingRepository;
 import com.ilhanozkan.libraryManagementSystem.repository.UserRepository;
 import com.ilhanozkan.libraryManagementSystem.service.BookService;
 import com.ilhanozkan.libraryManagementSystem.service.BorrowingService;
+import com.ilhanozkan.libraryManagementSystem.util.CustomDateTimeFormatter;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,5 +119,54 @@ public class BorrowingServiceImpl implements BorrowingService {
 
 
     borrowingRepository.delete(borrowing);
+  }
+
+
+  @Transactional
+  public byte[] getOverdueBooksPDFReport() {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    PdfWriter writer = new PdfWriter(baos);
+    PdfDocument pdf = new PdfDocument(writer);
+    Document document = new Document(pdf);
+
+    document.add(new Paragraph(getOverdueBooksTextReport()));
+    document.close();
+
+    byte[] pdfBytes = baos.toByteArray();
+
+    return pdfBytes;
+  }
+
+  @Transactional
+  public String getOverdueBooksTextReport() {
+
+    StringBuilder report = new StringBuilder();
+    report.append("Overdue Books Report\n");
+    report.append("Report Generation Date: ").append(CustomDateTimeFormatter.formatDateTime(java.time.LocalDateTime.now())).append("\n\n");
+
+    List<Borrowing> overdueBooks = borrowingRepository.findOverdueBooks();
+
+    report.append("Total Borrowings Count: ").append(borrowingRepository.count()).append("\n");
+    report.append("Total Overdue Books Count: ").append(overdueBooks.size()).append("\n\n");
+
+    report.append("Overdue Books:\n");
+    report.append("-------------------------\n");
+    for (Borrowing borrowing : overdueBooks) {
+      report.append("Book ID: ").append(borrowing.getBook().getId()).append("\n");
+      report.append("Book Name: ").append(borrowing.getBook().getName()).append("\n");
+      report.append("Book Author: ").append(borrowing.getBook().getAuthor()).append("\n");
+      report.append("Borrow Date: ").append(CustomDateTimeFormatter.formatDateTime(borrowing.getBorrowDate())).append("\n");
+
+      // Using CustomDateTimeFormatter to format the due date
+      report.append("Due Date: ").append(CustomDateTimeFormatter.formatDateTime(borrowing.getDueDate())).append("\n");
+      report.append("User ID: ").append(borrowing.getUser().getId()).append("\n");
+      report.append("User Name: ").append(borrowing.getUser().getName()).append("\n");
+      report.append("User Surname: ").append(borrowing.getUser().getSurname()).append("\n");
+      report.append("User Email: ").append(borrowing.getUser().getEmail()).append("\n");
+      report.append("-------------------------\n");
+    }
+
+    return report.toString();
   }
 }

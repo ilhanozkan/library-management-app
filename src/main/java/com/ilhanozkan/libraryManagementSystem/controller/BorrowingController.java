@@ -1,6 +1,5 @@
 package com.ilhanozkan.libraryManagementSystem.controller;
 
-import com.ilhanozkan.libraryManagementSystem.common.exception.book.BookAlreadyReturnedException;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BorrowingRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BorrowingResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.entity.User;
@@ -11,8 +10,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,7 @@ import java.util.UUID;
 @Tag(name = "Borrowing Operations")
 @RestController
 @RequestMapping("/borrowings")
+@Slf4j
 public class BorrowingController {
   private final BorrowingServiceImpl borrowingService;
 
@@ -149,5 +152,42 @@ public class BorrowingController {
     User user = userPrincipal.getUser();
     
     return ResponseEntity.ok(borrowingService.getActiveBorrowingsByUserId(user.getId()));
+  }
+
+  @Operation(summary = "Generate overdue books PDF report", description = "Generates a PDF report of overdue books")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully generated overdue books report"),
+      @ApiResponse(responseCode = "400", description = "Error generating report")
+  })
+  @GetMapping("/overdue-pdf-report")
+  @PreAuthorize("hasRole('LIBRARIAN')")
+  public ResponseEntity<?> getOverdueBooksPDFReport() {
+    try {
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf")
+          .contentType(MediaType.APPLICATION_PDF)
+          .body(borrowingService.getOverdueBooksPDFReport());
+    } catch (RuntimeException e) {
+      log.error("Error generating overdue books report", e);
+      return ResponseEntity.badRequest().body(e.getMessage());
+    } catch (Exception e) {
+      return ResponseEntity.status(500).body(null);
+    }
+  }
+
+  @Operation(summary = "Generate overdue books text report", description = "Generates a text report of overdue books")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully generated overdue books report"),
+      @ApiResponse(responseCode = "400", description = "Error generating report")
+  })
+  @GetMapping("/overdue-report")
+  @PreAuthorize("hasRole('LIBRARIAN')")
+  public ResponseEntity<?> getOverdueBooksTextReport() {
+    try {
+      return ResponseEntity.ok(borrowingService.getOverdueBooksTextReport());
+    } catch (RuntimeException e) {
+      log.error("Error generating overdue books report", e);
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
   }
 }

@@ -47,7 +47,7 @@ public class Borrowing {
   private LocalDateTime updatedAt;
 
   // Expiration duration (days)
-  int expirationDuration = 14;
+  private static final int expirationDuration = 14;
 
   @PrePersist
   public void onCreate() {
