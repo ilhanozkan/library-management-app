@@ -26,7 +26,7 @@ public class User {
   private String username;
 
   @Column(nullable = false, unique = true)
-  @Email
+  @Email(message = "Email should be valid")
   private String email;
 
   @Column(nullable = false)

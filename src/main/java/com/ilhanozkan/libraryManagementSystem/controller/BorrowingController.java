@@ -1,7 +1,10 @@
 package com.ilhanozkan.libraryManagementSystem.controller;
 
+import com.ilhanozkan.libraryManagementSystem.common.exception.book.BookAlreadyReturnedException;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BorrowingRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BorrowingResponseDTO;
+import com.ilhanozkan.libraryManagementSystem.model.entity.User;
+import com.ilhanozkan.libraryManagementSystem.model.entity.UserPrincipal;
 import com.ilhanozkan.libraryManagementSystem.service.impl.BorrowingServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,6 +14,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +34,12 @@ public class BorrowingController {
   }
 
   @Description("List user's all borrowings with filters")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved user's all borrowings with filter"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
+  })
   @GetMapping
+  @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getBorrowings() {
     try {
       return borrowingService.getBorrowings();
@@ -40,9 +51,11 @@ public class BorrowingController {
   @Operation(summary = "Get user's borrowings", description = "Retrieves all borrowings for a specific user")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved user's borrowings"),
-      @ApiResponse(responseCode = "404", description = "User not found")
+      @ApiResponse(responseCode = "404", description = "User not found"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
   })
   @GetMapping("/user/{userId}")
+  @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getBorrowingsByUserId(
       @Parameter(description = "ID of the user") @PathVariable UUID userId) {
     return borrowingService.getBorrowingsByUserId(userId);
@@ -51,9 +64,11 @@ public class BorrowingController {
   @Operation(summary = "Get user's active borrowings", description = "Retrieves active borrowings for a specific user")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully retrieved user's active borrowings"),
-      @ApiResponse(responseCode = "404", description = "User not found")
+      @ApiResponse(responseCode = "404", description = "User not found"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
   })
   @GetMapping("/user/{userId}/active")
+  @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getActiveBorrowingsByUserId(
       @Parameter(description = "ID of the user") @PathVariable UUID userId) {
     return borrowingService.getActiveBorrowingsByUserId(userId);
@@ -62,9 +77,11 @@ public class BorrowingController {
   @Operation(summary = "Create new borrowing", description = "Creates a new book borrowing")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully created borrowing"),
-      @ApiResponse(responseCode = "400", description = "Invalid input or book not available")
+      @ApiResponse(responseCode = "400", description = "Invalid input or book not available"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
   })
   @PostMapping
+  @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<?> createBorrowing(@ModelAttribute BorrowingRequestDTO borrowingRequestDTO) {
     try {
       return ResponseEntity.ok(borrowingService.createBorrowing(borrowingRequestDTO));
@@ -79,21 +96,23 @@ public class BorrowingController {
       @ApiResponse(responseCode = "400", description = "Book already returned or invalid input")
   })
   @PutMapping("/{id}/return")
-  public ResponseEntity<BorrowingResponseDTO> returnBook(
+  public ResponseEntity<?> returnBook(
       @Parameter(description = "ID of the borrowing record") @PathVariable UUID id) {
     try {
       return ResponseEntity.ok(borrowingService.returnBook(id));
     } catch (RuntimeException e) {
-      return ResponseEntity.badRequest().build();
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
 
   @Operation(summary = "Delete borrowing", description = "Deletes a borrowing record")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully deleted borrowing"),
-      @ApiResponse(responseCode = "404", description = "Borrowing not found")
+      @ApiResponse(responseCode = "404", description = "Borrowing not found"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
   })
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<Void> deleteBorrowing(
       @Parameter(description = "ID of the borrowing record to delete") @PathVariable UUID id) {
     try {
@@ -102,5 +121,33 @@ public class BorrowingController {
     } catch (RuntimeException e) {
       return ResponseEntity.notFound().build();
     }
+  }
+
+  @Operation(summary = "Get my borrowing history", description = "Retrieves all borrowings for the authenticated user")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved borrowing history"),
+      @ApiResponse(responseCode = "404", description = "User not found"),
+  })
+  @GetMapping("/my-history")
+  public ResponseEntity<List<BorrowingResponseDTO>> getMyBorrowingHistory() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    User user = userPrincipal.getUser();
+    
+    return ResponseEntity.ok(borrowingService.getBorrowingsByUserId(user.getId()));
+  }
+
+  @Operation(summary = "Get my active borrowings", description = "Retrieves active borrowings for the authenticated user")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved active borrowings"),
+      @ApiResponse(responseCode = "404", description = "User not found"),
+  })
+  @GetMapping("/my-active")
+  public ResponseEntity<List<BorrowingResponseDTO>> getMyActiveBorrowings() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    User user = userPrincipal.getUser();
+    
+    return ResponseEntity.ok(borrowingService.getActiveBorrowingsByUserId(user.getId()));
   }
 }

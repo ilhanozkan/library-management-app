@@ -2,7 +2,6 @@ package com.ilhanozkan.libraryManagementSystem.controller;
 
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpdateDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
-import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
 import com.ilhanozkan.libraryManagementSystem.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,12 +14,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -41,7 +39,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getAllBooks(pageable));
       } catch (RuntimeException e) {
         log.error("Error retrieving all books", e);
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body(e.getMessage());
       }
     }
 
@@ -59,7 +57,7 @@ public class BookController {
             return ResponseEntity.ok(bookService.searchBooks(title, author, isbn, genre));
         } catch (RuntimeException e) {
             log.error("Error searching books", e);
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -75,7 +73,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBookById(id));
       } catch (RuntimeException e) {
         log.error("Error retrieving book with ID {}", id, e);
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body(e.getMessage());
       }
     }
 
@@ -91,7 +89,7 @@ public class BookController {
         return ResponseEntity.ok(bookService.getBookByIsbn(isbn));
       } catch (RuntimeException e) {
         log.error("Error retrieving book with ISBN {}", isbn, e);
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body(e.getMessage());
       }
     }
 
@@ -101,6 +99,7 @@ public class BookController {
         @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PostMapping
+    @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<?> createBook(
             @Parameter(description = "Book details to create") @Valid @RequestBody BookRequestDTO bookRequestDTO) {
       try {
@@ -115,7 +114,7 @@ public class BookController {
             return ResponseEntity.badRequest().body("Book genre must be specified. Please choose from the available genres: " + 
                                                   Arrays.toString(BookGenre.values()));
         }
-        return ResponseEntity.badRequest().build();
+        return ResponseEntity.badRequest().body(e.getMessage());
       }
     }
 
@@ -126,6 +125,7 @@ public class BookController {
         @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<?> updateBook(
             @Parameter(description = "ID of the book to update") @PathVariable UUID id,
             @Parameter(description = "Updated book details") @Valid @RequestBody BookRequestDTO bookDetails) {
@@ -133,7 +133,7 @@ public class BookController {
             return ResponseEntity.ok(bookService.updateBook(id, bookDetails));
         } catch (RuntimeException e) {
             log.error("Error updating book with ID {}", id, e);
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -144,6 +144,7 @@ public class BookController {
         @ApiResponse(responseCode = "400", description = "Invalid input or quantity exceeds total quantity")
     })
     @PutMapping("/{id}/available-quantity")
+    @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<?> updateBookAvailableQuantity(
             @Parameter(description = "ID of the book to update") @PathVariable UUID id,
             @Parameter(description = "New available quantity") @Valid @RequestBody BookQuantityUpdateDTO quantityUpdateDTO) {
@@ -164,6 +165,7 @@ public class BookController {
         @ApiResponse(responseCode = "404", description = "Book not found")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('LIBRARIAN')")
     public ResponseEntity<?> deleteBook(
             @Parameter(description = "ID of the book to delete") @PathVariable UUID id) {
         try {
@@ -171,7 +173,7 @@ public class BookController {
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             log.error("Error deleting book with ID {}", id, e);
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 } 

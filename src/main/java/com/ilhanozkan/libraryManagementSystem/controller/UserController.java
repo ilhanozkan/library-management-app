@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "User Operations")
@@ -74,13 +73,13 @@ public class UserController {
       }
   )
   @PostMapping
-  public ResponseEntity<UserResponseDTO> createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
+  public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
     try {
       UserResponseDTO response = userService.createUser(userRequestDTO);
 
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (RuntimeException e) {
-      return ResponseEntity.badRequest().build();
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
 
@@ -90,13 +89,13 @@ public class UserController {
       @ApiResponse(responseCode = "404", description = "User not found")
   })
   @GetMapping("/email/{email}")
-  public ResponseEntity<UserResponseDTO> getUserByEmail(
+  public ResponseEntity<?> getUserByEmail(
       @Parameter(description = "Email of the user to retrieve") @PathVariable String email) {
     try {
       UserResponseDTO user = userService.getUserByEmail(email);
       return ResponseEntity.ok(user);
     } catch (Exception e) {
-      return ResponseEntity.notFound().build();
+      return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
 

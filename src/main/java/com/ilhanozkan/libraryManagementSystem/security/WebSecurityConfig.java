@@ -32,6 +32,7 @@ public class WebSecurityConfig {
                 auth -> auth
                     .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/users/**").hasRole("LIBRARIAN")
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

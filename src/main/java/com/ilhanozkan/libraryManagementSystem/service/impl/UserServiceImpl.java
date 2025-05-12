@@ -52,6 +52,13 @@ public class UserServiceImpl implements UserService {
   public UserResponseDTO getUserByEmail(String email) {
     Optional<User> user = userRepository.findByEmail(email);
 
+    // Validate the email format
+    if (email == null || email.trim().isEmpty())
+      throw new RuntimeException("Email is required");
+
+    if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$"))
+      throw new RuntimeException("Email is not valid");
+
     if (user.isEmpty())
       throw new ResourceNotFoundException("User", "email", email);
 
@@ -62,8 +69,12 @@ public class UserServiceImpl implements UserService {
     if (userRequestDTO.password() == null || userRequestDTO.password().isEmpty())
       throw new RuntimeException("Password is required");
 
-    if (userRequestDTO.email() == null || userRequestDTO.email().isEmpty())
+    if (userRequestDTO.email() == null || userRequestDTO.email().trim().isEmpty())
       throw new RuntimeException("Email is required");
+
+    // Check if the email is valid
+    if (!userRequestDTO.email().matches("^[A-Za-z0-9+_.-]+@(.+)$"))
+      throw new RuntimeException("Email is not valid");
 
     if (userRequestDTO.password().length() < 8)
       throw new RuntimeException("Password length should be at least 8 characters");
