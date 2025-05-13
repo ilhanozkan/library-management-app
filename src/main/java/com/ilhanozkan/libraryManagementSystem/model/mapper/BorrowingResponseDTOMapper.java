@@ -13,7 +13,7 @@ public interface BorrowingResponseDTOMapper {
   BorrowingResponseDTOMapper INSTANCE = Mappers.getMapper(BorrowingResponseDTOMapper.class);
 
   @Mapping(target = "bookName", expression = "java(borrowing.getBook() != null ? borrowing.getBook().getName() : null)")
-  @Mapping(target = "userName", expression = "java(borrowing.getUser() != null ? borrowing.getUser().getName() + \" \" + borrowing.getUser().getSurname() : null)")
+  @Mapping(target = "userFullName", expression = "java(borrowing.getUser() != null ? borrowing.getUser().getName() + \" \" + borrowing.getUser().getSurname() : null)")
   BorrowingResponseDTO toBorrowingResponseDTO(Borrowing borrowing);
 
   List<BorrowingResponseDTO> toBorrowingResponseDTOList(List<Borrowing> borrowings);
