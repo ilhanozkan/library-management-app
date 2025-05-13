@@ -23,7 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/books")
+@RequestMapping("/books")
 @Tag(name = "Book Management", description = "APIs for managing books in the library")
 @Slf4j
 public class BookController {

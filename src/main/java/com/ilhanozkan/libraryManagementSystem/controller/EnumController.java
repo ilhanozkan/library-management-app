@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/enums")
+@RequestMapping("/enums")
 @Tag(name = "Enum Values", description = "APIs for retrieving enum values used in the application")
 public class EnumController {
 

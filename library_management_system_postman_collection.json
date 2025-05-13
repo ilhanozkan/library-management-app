@@ -97,12 +97,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/books?page=0&size=10",
+							"raw": "{{baseUrl}}/books?page=0&size=10",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books"
 							],
 							"query": [
@@ -131,12 +130,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/books/search?title=&author=&isbn=&genre=",
+							"raw": "{{baseUrl}}/books/search?title=&author=&isbn=&genre=",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"search"
 							],
@@ -174,12 +172,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"raw": "{{baseUrl}}/books/{{book_id}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"{{book_id}}"
 							]
@@ -199,12 +196,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/books/isbn/9781234567890",
+							"raw": "{{baseUrl}}/books/isbn/9781234567890",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"isbn",
 								"9781234567890"
@@ -248,12 +244,11 @@
 							"raw": "{\n    \"name\": \"Test Book\",\n    \"isbn\": \"9795195964643\",\n    \"author\": \"Test Author\",\n    \"publisher\": \"string\",\n    \"numberOfPages\": 100,\n    \"quantity\": 5,\n    \"genre\": \"ACTION\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/books",
+							"raw": "{{baseUrl}}/books",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books"
 							]
 						},
@@ -280,12 +275,11 @@
 							"raw": "{\n    \"name\": \"Updated Test Book\",\n    \"isbn\": \"9795195964643\",\n    \"author\": \"Test Author\",\n    \"publisher\": \"string\",\n    \"numberOfPages\": 100,\n    \"quantity\": 5,\n    \"genre\": \"ACTION\"\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"raw": "{{baseUrl}}/books/{{book_id}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"{{book_id}}"
 							]
@@ -313,12 +307,11 @@
 							"raw": "{\n    \"availableQuantity\": 4\n}"
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/books/{{book_id}}/available-quantity",
+							"raw": "{{baseUrl}}/books/{{book_id}}/available-quantity",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"{{book_id}}",
 								"available-quantity"
@@ -339,12 +332,11 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"raw": "{{baseUrl}}/books/{{book_id}}",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
-								"api",
 								"books",
 								"{{book_id}}"
 							]
@@ -947,6 +939,62 @@
 								"books",
 								"availability",
 								"stream"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Enums",
+			"item": [
+				{
+					"name": "Get All Book Genres",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzdHJpbmciLCJpYXQiOjE3NDcwOTYyMTAsImV4cCI6MTc0NzE4MjYxMH0.-fcsBYYtuoaXfYv0BpGaPBxT1bU8CCWxfs2cw9MM9rUPIBDX_swYhX3cav8UUKXsQVTGw-k_O87JV9zjCNki1w",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/stream+json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "text/event-stream",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/enums/book-genres",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"enums",
+								"book-genres"
 							]
 						}
 					},
