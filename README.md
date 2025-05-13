@@ -211,6 +211,7 @@ A Postman collection is included in the repository (`library_management_system_p
 - Implement caching for frequently accessed data
 - Add support for digital books and e-lending
 - CSRF protection for all forms
+- Refresh token mechanism for JWT
 
 ## License
 
