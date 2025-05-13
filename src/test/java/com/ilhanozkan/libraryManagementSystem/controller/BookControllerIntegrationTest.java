@@ -110,7 +110,7 @@ public class BookControllerIntegrationTest {
     @Test
     public void shouldGetAllBooks() throws Exception {
         // When
-        ResultActions response = mockMvc.perform(get("/api/books")
+        ResultActions response = mockMvc.perform(get("/books")
                 .contentType(MediaType.APPLICATION_JSON));
 
         // Then
@@ -124,7 +124,7 @@ public class BookControllerIntegrationTest {
     @Test
     public void shouldGetBookById() throws Exception {
         // When
-        ResultActions response = mockMvc.perform(get("/api/books/{id}", testBook.getId())
+        ResultActions response = mockMvc.perform(get("/books/{id}", testBook.getId())
                 .contentType(MediaType.APPLICATION_JSON));
 
         // Then
@@ -137,7 +137,7 @@ public class BookControllerIntegrationTest {
     @Test
     public void shouldGetBookByIsbn() throws Exception {
         // When
-        ResultActions response = mockMvc.perform(get("/api/books/isbn/{isbn}", "9781234567890")
+        ResultActions response = mockMvc.perform(get("/books/isbn/{isbn}", "9781234567890")
                 .contentType(MediaType.APPLICATION_JSON));
 
         // Then
@@ -160,7 +160,7 @@ public class BookControllerIntegrationTest {
         bookRequestDTO.setGenre(BookGenre.FANTASY);
 
         // When
-        ResultActions response = mockMvc.perform(post("/api/books")
+        ResultActions response = mockMvc.perform(post("/books")
                 .header("Authorization", "Bearer " + librarianToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bookRequestDTO)));
@@ -186,7 +186,7 @@ public class BookControllerIntegrationTest {
         bookRequestDTO.setGenre(BookGenre.FANTASY);
 
         // When
-        ResultActions response = mockMvc.perform(post("/api/books")
+        ResultActions response = mockMvc.perform(post("/books")
                 .header("Authorization", "Bearer " + patronToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bookRequestDTO)));
@@ -209,7 +209,7 @@ public class BookControllerIntegrationTest {
         bookRequestDTO.setGenre(BookGenre.SCIENCE);
 
         // When
-        ResultActions response = mockMvc.perform(put("/api/books/{id}", testBook.getId())
+        ResultActions response = mockMvc.perform(put("/books/{id}", testBook.getId())
                 .header("Authorization", "Bearer " + librarianToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(bookRequestDTO)));
@@ -225,7 +225,7 @@ public class BookControllerIntegrationTest {
     @Test
     public void shouldDeleteBookWhenLibrarian() throws Exception {
         // When
-        ResultActions response = mockMvc.perform(delete("/api/books/{id}", testBook.getId())
+        ResultActions response = mockMvc.perform(delete("/books/{id}", testBook.getId())
                 .header("Authorization", "Bearer " + librarianToken));
 
         // Then
@@ -233,14 +233,14 @@ public class BookControllerIntegrationTest {
                 .andDo(print());
 
         // Verify book was deleted
-        mockMvc.perform(get("/api/books/{id}", testBook.getId()))
+        mockMvc.perform(get("/books/{id}", testBook.getId()))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     public void shouldNotDeleteBookWhenPatron() throws Exception {
         // When
-        ResultActions response = mockMvc.perform(delete("/api/books/{id}", testBook.getId())
+        ResultActions response = mockMvc.perform(delete("/books/{id}", testBook.getId())
                 .header("Authorization", "Bearer " + patronToken));
 
         // Then
@@ -248,7 +248,7 @@ public class BookControllerIntegrationTest {
                 .andDo(print());
 
         // Verify book was not deleted
-        mockMvc.perform(get("/api/books/{id}", testBook.getId()))
+        mockMvc.perform(get("/books/{id}", testBook.getId()))
                 .andExpect(status().isOk());
     }
 
@@ -268,7 +268,7 @@ public class BookControllerIntegrationTest {
         bookRepository.save(anotherBook);
 
         // Search by title
-        mockMvc.perform(get("/api/books/search")
+        mockMvc.perform(get("/books/search")
                 .param("title", "Hobbit")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -277,7 +277,7 @@ public class BookControllerIntegrationTest {
                 .andDo(print());
 
         // Search by author
-        mockMvc.perform(get("/api/books/search")
+        mockMvc.perform(get("/books/search")
                 .param("author", "Test")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

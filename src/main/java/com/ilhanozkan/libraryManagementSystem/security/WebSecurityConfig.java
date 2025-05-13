@@ -47,16 +47,16 @@ public class WebSecurityConfig {
                     
                     if (isTestProfile) {
                         // In test profile, make all /api endpoints accessible for easier testing
-                        auth.requestMatchers("/api/books/**").permitAll()
-                            .requestMatchers("/api/borrowings/**").permitAll()
+                        auth.requestMatchers("/books/**").permitAll()
+                            .requestMatchers("/borrowings/**").permitAll()
                             .requestMatchers("/users/**").permitAll();
                     } else {
                         // In non-test profiles, apply proper security
                         auth.requestMatchers("/users/**").hasAuthority("ROLE_LIBRARIAN")
-                            .requestMatchers("/api/books/*/borrow").authenticated()
-                            .requestMatchers("/api/books/*/return").authenticated()
-                            .requestMatchers("/api/books/**").permitAll() // Allow book search/view to all
-                            .requestMatchers("/api/borrowings/**").authenticated();
+                            .requestMatchers("/books/*/borrow").authenticated()
+                            .requestMatchers("/books/*/return").authenticated()
+                            .requestMatchers("/books/**").permitAll() // Allow book search/view to all
+                            .requestMatchers("/borrowings/**").authenticated();
                     }
                     
                     auth.anyRequest().authenticated();
