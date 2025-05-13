@@ -34,6 +34,7 @@ public class BorrowingController {
   @Autowired
   public BorrowingController(BorrowingServiceImpl borrowingService) {
     this.borrowingService = borrowingService;
+    log.info("BorrowingController initialized");
   }
 
   @Description("List user's all borrowings with filters")
@@ -45,8 +46,12 @@ public class BorrowingController {
   @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getBorrowings() {
     try {
-      return borrowingService.getBorrowings();
+      log.info("Request to get all borrowings");
+      List<BorrowingResponseDTO> borrowings = borrowingService.getBorrowings();
+      log.info("Successfully retrieved {} borrowings", borrowings.size());
+      return borrowings;
     } catch (RuntimeException e) {
+      log.error("Error retrieving all borrowings", e);
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -61,7 +66,10 @@ public class BorrowingController {
   @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getBorrowingsByUserId(
       @Parameter(description = "ID of the user") @PathVariable UUID userId) {
-    return borrowingService.getBorrowingsByUserId(userId);
+    log.info("Request to get borrowings for user ID: {}", userId);
+    List<BorrowingResponseDTO> borrowings = borrowingService.getBorrowingsByUserId(userId);
+    log.info("Successfully retrieved {} borrowings for user ID: {}", borrowings.size(), userId);
+    return borrowings;
   }
 
   @Operation(summary = "Get user's active borrowings", description = "Retrieves active borrowings for a specific user")
@@ -74,7 +82,10 @@ public class BorrowingController {
   @PreAuthorize("hasRole('LIBRARIAN')")
   public List<BorrowingResponseDTO> getActiveBorrowingsByUserId(
       @Parameter(description = "ID of the user") @PathVariable UUID userId) {
-    return borrowingService.getActiveBorrowingsByUserId(userId);
+    log.info("Request to get active borrowings for user ID: {}", userId);
+    List<BorrowingResponseDTO> activeBorrowings = borrowingService.getActiveBorrowingsByUserId(userId);
+    log.info("Successfully retrieved {} active borrowings for user ID: {}", activeBorrowings.size(), userId);
+    return activeBorrowings;
   }
 
   @Operation(summary = "Create new borrowing", description = "Creates a new book borrowing")
@@ -86,9 +97,15 @@ public class BorrowingController {
   @PostMapping
   @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<?> createBorrowing(@ModelAttribute BorrowingRequestDTO borrowingRequestDTO) {
+    log.info("Request to create borrowing - Book ID: {}, User ID: {}", 
+             borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId());
     try {
-      return ResponseEntity.ok(borrowingService.createBorrowing(borrowingRequestDTO));
+      BorrowingResponseDTO borrowing = borrowingService.createBorrowing(borrowingRequestDTO);
+      log.info("Borrowing created successfully with ID: {}", borrowing.id());
+      return ResponseEntity.ok(borrowing);
     } catch (RuntimeException e) {
+      log.error("Error creating borrowing - Book ID: {}, User ID: {}: {}", 
+                borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId(), e.getMessage());
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -101,9 +118,13 @@ public class BorrowingController {
   @PutMapping("/{id}/return")
   public ResponseEntity<?> returnBook(
       @Parameter(description = "ID of the borrowing record") @PathVariable UUID id) {
+    log.info("Request to return book for borrowing ID: {}", id);
     try {
-      return ResponseEntity.ok(borrowingService.returnBook(id));
+      BorrowingResponseDTO borrowing = borrowingService.returnBook(id);
+      log.info("Book returned successfully for borrowing ID: {}", id);
+      return ResponseEntity.ok(borrowing);
     } catch (RuntimeException e) {
+      log.error("Error returning book for borrowing ID: {}: {}", id, e.getMessage());
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -118,10 +139,13 @@ public class BorrowingController {
   @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<Void> deleteBorrowing(
       @Parameter(description = "ID of the borrowing record to delete") @PathVariable UUID id) {
+    log.info("Request to delete borrowing with ID: {}", id);
     try {
       borrowingService.deleteBorrowing(id);
+      log.info("Borrowing deleted successfully: {}", id);
       return ResponseEntity.ok().build();
     } catch (RuntimeException e) {
+      log.error("Error deleting borrowing with ID: {}: {}", id, e.getMessage());
       return ResponseEntity.notFound().build();
     }
   }
@@ -137,7 +161,10 @@ public class BorrowingController {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     User user = userPrincipal.getUser();
     
-    return ResponseEntity.ok(borrowingService.getBorrowingsByUserId(user.getId()));
+    log.info("Request to get borrowing history for authenticated user ID: {}", user.getId());
+    List<BorrowingResponseDTO> borrowings = borrowingService.getBorrowingsByUserId(user.getId());
+    log.info("Successfully retrieved {} borrowings for authenticated user", borrowings.size());
+    return ResponseEntity.ok(borrowings);
   }
 
   @Operation(summary = "Get my active borrowings", description = "Retrieves active borrowings for the authenticated user")
@@ -151,7 +178,10 @@ public class BorrowingController {
     UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
     User user = userPrincipal.getUser();
     
-    return ResponseEntity.ok(borrowingService.getActiveBorrowingsByUserId(user.getId()));
+    log.info("Request to get active borrowings for authenticated user ID: {}", user.getId());
+    List<BorrowingResponseDTO> activeBorrowings = borrowingService.getActiveBorrowingsByUserId(user.getId());
+    log.info("Successfully retrieved {} active borrowings for authenticated user", activeBorrowings.size());
+    return ResponseEntity.ok(activeBorrowings);
   }
 
   @Operation(summary = "Generate overdue books PDF report", description = "Generates a PDF report of overdue books")
@@ -162,15 +192,19 @@ public class BorrowingController {
   @GetMapping("/overdue-pdf-report")
   @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<?> getOverdueBooksPDFReport() {
+    log.info("Request to generate overdue books PDF report");
     try {
+      byte[] report = borrowingService.getOverdueBooksPDFReport();
+      log.info("Successfully generated overdue books PDF report, size: {} bytes", report.length);
       return ResponseEntity.ok()
           .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=report.pdf")
           .contentType(MediaType.APPLICATION_PDF)
-          .body(borrowingService.getOverdueBooksPDFReport());
+          .body(report);
     } catch (RuntimeException e) {
-      log.error("Error generating overdue books report", e);
+      log.error("Error generating overdue books PDF report", e);
       return ResponseEntity.badRequest().body(e.getMessage());
     } catch (Exception e) {
+      log.error("Unexpected error generating overdue books PDF report", e);
       return ResponseEntity.status(500).body(null);
     }
   }
@@ -183,10 +217,13 @@ public class BorrowingController {
   @GetMapping("/overdue-report")
   @PreAuthorize("hasRole('LIBRARIAN')")
   public ResponseEntity<?> getOverdueBooksTextReport() {
+    log.info("Request to generate overdue books text report");
     try {
-      return ResponseEntity.ok(borrowingService.getOverdueBooksTextReport());
+      String report = borrowingService.getOverdueBooksTextReport();
+      log.info("Successfully generated overdue books text report");
+      return ResponseEntity.ok(report);
     } catch (RuntimeException e) {
-      log.error("Error generating overdue books report", e);
+      log.error("Error generating overdue books text report", e);
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }

@@ -24,6 +24,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BorrowingServiceImpl implements BorrowingService {
   private final BorrowingRepository borrowingRepository;
   private final BookRepository bookRepository;
@@ -45,44 +47,75 @@ public class BorrowingServiceImpl implements BorrowingService {
 
   @Transactional
   public List<BorrowingResponseDTO> getBorrowings() {
+    log.debug("Fetching all borrowings");
     try {
-      return mapper.toBorrowingResponseDTOList(borrowingRepository.findAll());
+      List<Borrowing> borrowings = borrowingRepository.findAll();
+      log.debug("Retrieved {} borrowings", borrowings.size());
+      return mapper.toBorrowingResponseDTOList(borrowings);
     } catch (RuntimeException e) {
+      log.error("Error retrieving all borrowings", e);
       throw new RuntimeException(e.getMessage());
     }
   }
 
   @Transactional
   public List<BorrowingResponseDTO> getBorrowingsByUserId(UUID userId) {
+    log.debug("Fetching borrowings for user ID: {}", userId);
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UserNotFoundException(userId));
+        .orElseThrow(() -> {
+          log.warn("User not found with ID: {}", userId);
+          return new UserNotFoundException(userId);
+        });
 
-    return mapper.toBorrowingResponseDTOList(borrowingRepository.findByUser(user));
+    List<Borrowing> borrowings = borrowingRepository.findByUser(user);
+    log.debug("Retrieved {} borrowings for user ID: {}", borrowings.size(), userId);
+    return mapper.toBorrowingResponseDTOList(borrowings);
   }
 
   @Transactional
   public List<BorrowingResponseDTO> getActiveBorrowingsByUserId(UUID userId) {
+    log.debug("Fetching active borrowings for user ID: {}", userId);
     User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UserNotFoundException(userId));
+        .orElseThrow(() -> {
+          log.warn("User not found with ID: {}", userId);
+          return new UserNotFoundException(userId);
+        });
 
-    return mapper.toBorrowingResponseDTOList(borrowingRepository.findByUserAndReturnedFalse(user));
+    List<Borrowing> activeBorrowings = borrowingRepository.findByUserAndReturnedFalse(user);
+    log.debug("Retrieved {} active borrowings for user ID: {}", activeBorrowings.size(), userId);
+    return mapper.toBorrowingResponseDTOList(activeBorrowings);
   }
 
   @Transactional
   public BorrowingResponseDTO createBorrowing(BorrowingRequestDTO borrowingRequestDTO) {
+      log.info("Creating new borrowing - Book ID: {}, User ID: {}", 
+               borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId());
+      
       Book book = bookRepository.findById(borrowingRequestDTO.getBookId()).orElseThrow(
-          () -> new BookNotFoundException(borrowingRequestDTO.getBookId())
+          () -> {
+            log.warn("Book not found with ID: {}", borrowingRequestDTO.getBookId());
+            return new BookNotFoundException(borrowingRequestDTO.getBookId());
+          }
       );
 
       User user = userRepository.findById(borrowingRequestDTO.getUserId()).orElseThrow(
-          () -> new UserNotFoundException(borrowingRequestDTO.getUserId())
+          () -> {
+            log.warn("User not found with ID: {}", borrowingRequestDTO.getUserId());
+            return new UserNotFoundException(borrowingRequestDTO.getUserId());
+          }
       );
 
-      if (user.getStatus() != UserStatus.ACTIVE)
+      if (user.getStatus() != UserStatus.ACTIVE) {
+        log.warn("User with ID {} is not active. Current status: {}", 
+                 borrowingRequestDTO.getUserId(), user.getStatus());
         throw new UserIsNotActiveException(borrowingRequestDTO.getUserId());
+      }
 
-      if (book.getAvailableQuantity() <= 0)
+      if (book.getAvailableQuantity() <= 0) {
+        log.warn("Book with ID {} is not available. Current available quantity: {}", 
+                 borrowingRequestDTO.getBookId(), book.getAvailableQuantity());
         throw new BookNotAvailableException(borrowingRequestDTO.getBookId());
+      }
 
       Borrowing borrowing = new Borrowing();
       borrowing.setBorrowDate(LocalDateTime.now());
@@ -90,64 +123,92 @@ public class BorrowingServiceImpl implements BorrowingService {
       borrowing.setBook(book);
       borrowing.setUser(user);
 
-      return mapper.toBorrowingResponseDTO(borrowingRepository.save(borrowing));
+      Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+      log.info("Borrowing created successfully with ID: {}", savedBorrowing.getId());
+      return mapper.toBorrowingResponseDTO(savedBorrowing);
   }
 
   @Transactional
   public BorrowingResponseDTO returnBook(UUID id) {
+      log.info("Processing book return for borrowing ID: {}", id);
       Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(
-          () -> new BorrowingNotFoundException(id)
+          () -> {
+            log.warn("Borrowing not found with ID: {}", id);
+            return new BorrowingNotFoundException(id);
+          }
       );
 
-      if (borrowing.getReturned())
+      if (borrowing.getReturned()) {
+        log.warn("Book already returned for borrowing ID: {}", id);
         throw new BookAlreadyReturnedException(id);
+      }
 
       borrowing.setReturned(true);
       borrowing.setReturnDate(LocalDateTime.now());
+      log.debug("Updating book quantity for book ID: {}", borrowing.getBook().getId());
       bookService.updateBookQuantity(borrowing.getBook().getId(), 1);
 
-      return mapper.toBorrowingResponseDTO(borrowingRepository.save(borrowing));
+      Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+      log.info("Book returned successfully for borrowing ID: {}", id);
+      return mapper.toBorrowingResponseDTO(savedBorrowing);
   }
 
   @Transactional
   public void deleteBorrowing(UUID id) {
+    log.info("Deleting borrowing with ID: {}", id);
     Borrowing borrowing = borrowingRepository.findById(id)
-        .orElseThrow(() -> new BorrowingNotFoundException(id));
+        .orElseThrow(() -> {
+          log.warn("Borrowing not found with ID: {}", id);
+          return new BorrowingNotFoundException(id);
+        });
 
-    if (!borrowing.getReturned())
+    if (!borrowing.getReturned()) {
+      log.debug("Book was not returned, updating available quantity for book ID: {}", 
+                borrowing.getBook().getId());
       bookService.updateBookQuantity(borrowing.getBook().getId(), 1);
-
+    }
 
     borrowingRepository.delete(borrowing);
+    log.info("Borrowing deleted successfully: {}", id);
   }
 
 
   @Transactional
   public byte[] getOverdueBooksPDFReport() {
+    log.info("Generating overdue books PDF report");
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-    PdfWriter writer = new PdfWriter(baos);
-    PdfDocument pdf = new PdfDocument(writer);
-    Document document = new Document(pdf);
+    try {
+      PdfWriter writer = new PdfWriter(baos);
+      PdfDocument pdf = new PdfDocument(writer);
+      Document document = new Document(pdf);
 
-    document.add(new Paragraph(getOverdueBooksTextReport()));
-    document.close();
+      document.add(new Paragraph(getOverdueBooksTextReport()));
+      document.close();
 
-    byte[] pdfBytes = baos.toByteArray();
-
-    return pdfBytes;
+      byte[] pdfBytes = baos.toByteArray();
+      log.info("Overdue books PDF report generated successfully, size: {} bytes", pdfBytes.length);
+      return pdfBytes;
+    } catch (Exception e) {
+      log.error("Error generating overdue books PDF report", e);
+      throw new RuntimeException("Failed to generate PDF report: " + e.getMessage());
+    }
   }
 
   @Transactional
   public String getOverdueBooksTextReport() {
+    log.info("Generating overdue books text report");
 
     StringBuilder report = new StringBuilder();
     report.append("Overdue Books Report\n");
     report.append("Report Generation Date: ").append(CustomDateTimeFormatter.formatDateTime(java.time.LocalDateTime.now())).append("\n\n");
 
     List<Borrowing> overdueBooks = borrowingRepository.findOverdueBooks();
+    long totalBorrowings = borrowingRepository.count();
+    
+    log.debug("Total borrowings: {}, Overdue books: {}", totalBorrowings, overdueBooks.size());
 
-    report.append("Total Borrowings Count: ").append(borrowingRepository.count()).append("\n");
+    report.append("Total Borrowings Count: ").append(totalBorrowings).append("\n");
     report.append("Total Overdue Books Count: ").append(overdueBooks.size()).append("\n\n");
 
     report.append("Overdue Books:\n");
@@ -167,6 +228,7 @@ public class BorrowingServiceImpl implements BorrowingService {
       report.append("-------------------------\n");
     }
 
+    log.info("Overdue books text report generated successfully");
     return report.toString();
   }
 }

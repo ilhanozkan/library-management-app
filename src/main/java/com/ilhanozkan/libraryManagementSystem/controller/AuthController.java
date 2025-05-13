@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
   private final AuthService authService;
 
@@ -27,9 +29,13 @@ public class AuthController {
   })
   @PostMapping("/register")
   public ResponseEntity<?> register(@RequestBody RegisterRequestDTO requestDTO) throws BadRequestException {
+    log.info("Registration attempt for username: {}", requestDTO.username());
     try {
-      return ResponseEntity.ok(authService.register(requestDTO));
+      ResponseEntity<?> response = ResponseEntity.ok(authService.register(requestDTO));
+      log.info("User registered successfully: {}", requestDTO.username());
+      return response;
     } catch (RuntimeException e) {
+      log.error("Registration failed for username {}: {}", requestDTO.username(), e.getMessage());
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -41,9 +47,13 @@ public class AuthController {
   })
   @PostMapping("/login")
   public ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO) {
+    log.info("Login attempt for username: {}", requestDTO.getUsername());
     try {
-      return ResponseEntity.ok(authService.login(requestDTO));
+      ResponseEntity<?> response = ResponseEntity.ok(authService.login(requestDTO));
+      log.info("User logged in successfully: {}", requestDTO.getUsername());
+      return response;
     } catch (RuntimeException e) {
+      log.error("Login failed for username {}: {}", requestDTO.getUsername(), e.getMessage());
       return ResponseEntity.status(401).body("Invalid username or password");
     }
   }

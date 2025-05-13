@@ -12,6 +12,7 @@ import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
 import com.ilhanozkan.libraryManagementSystem.model.mapper.BookResponseDTOMapper;
 import com.ilhanozkan.libraryManagementSystem.repository.BookRepository;
 import com.ilhanozkan.libraryManagementSystem.service.BookService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class BookServiceImpl implements BookService {
   private final BookRepository bookRepository;
   private final BookResponseDTOMapper mapper = BookResponseDTOMapper.INSTANCE;
@@ -29,12 +31,15 @@ public class BookServiceImpl implements BookService {
   @Autowired
   public BookServiceImpl(BookRepository bookRepository) {
     this.bookRepository = bookRepository;
+    log.info("BookServiceImpl initialized");
   }
 
   public PagedResponse<BookResponseDTO> getAllBooks(Pageable pageable) {
+    log.debug("Getting all books with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
     Page<Book> booksPage = bookRepository.findAll(pageable);
     List<Book> bookResponses = booksPage.getContent();
 
+    log.debug("Retrieved {} books out of {} total", bookResponses.size(), booksPage.getTotalElements());
     return PagedResponse.<BookResponseDTO>builder()
         .content(mapper.toBookResponseDTOList(bookResponses))
         .page(booksPage.getNumber())
@@ -43,13 +48,15 @@ public class BookServiceImpl implements BookService {
         .totalPages(booksPage.getTotalPages())
         .last(booksPage.isLast())
         .build();
-
   }
 
   // Search books by title, author, ISBN, or genre
   public List<BookResponseDTO> searchBooks(String title, String author, String isbn, String genre) {
+    log.debug("Searching books with parameters - title: {}, author: {}, isbn: {}, genre: {}", title, author, isbn, genre);
+    
     // If all parameters are null, return all books
     if (title == null && author == null && isbn == null && genre == null) {
+      log.debug("No search parameters provided, returning all books");
       return mapper.toBookResponseDTOList(bookRepository.findAll());
     }
     
@@ -59,32 +66,47 @@ public class BookServiceImpl implements BookService {
       try {
         BookGenre genreEnum = BookGenre.valueOf(genre.toUpperCase());
         genreValue = String.valueOf(genreEnum.ordinal());
+        log.debug("Converted genre '{}' to ordinal value '{}'", genre, genreValue);
       } catch (IllegalArgumentException e) {
         // Invalid genre provided, will return empty list
+        log.warn("Invalid genre provided: {}", genre);
         return List.of();
       }
     }
     
-    return mapper.toBookResponseDTOList(bookRepository.searchBooks(title, author, isbn, genreValue));
+    List<Book> books = bookRepository.searchBooks(title, author, isbn, genreValue);
+    log.debug("Found {} books matching the search criteria", books.size());
+    return mapper.toBookResponseDTOList(books);
   }
 
   private Book findBookById(UUID id) {
-    return bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
+    log.debug("Looking up book with ID: {}", id);
+    Book book = bookRepository.findById(id).orElseThrow(() -> {
+      log.warn("Book not found with ID: {}", id);
+      return new BookNotFoundException(id);
+    });
+    log.debug("Found book: {}", book.getName());
+    return book;
   }
 
   public BookResponseDTO getBookById(UUID id) {
+    log.debug("Getting book by ID: {}", id);
     return mapper.toBookResponseDTO(findBookById(id));
   }
   
   public BookResponseDTO getBookByIsbn(String isbn) {
+    log.debug("Getting book by ISBN: {}", isbn);
     Book book = bookRepository.findByIsbn(isbn);
-    if (book == null)
+    if (book == null) {
+        log.warn("Book not found with ISBN: {}", isbn);
         throw new BookNotFoundException("Book with ISBN " + isbn + " not found");
-
+    }
+    log.debug("Found book with ISBN {}: {}", isbn, book.getName());
     return mapper.toBookResponseDTO(book);
   }
 
   public BookResponseDTO createBook(BookRequestDTO bookRequestDTO) {
+    log.info("Creating new book: {} by {}", bookRequestDTO.getName(), bookRequestDTO.getAuthor());
     Book newBook = Book.builder()
         .isbn(bookRequestDTO.getIsbn())
         .name(bookRequestDTO.getName())
@@ -96,13 +118,17 @@ public class BookServiceImpl implements BookService {
         .genre(bookRequestDTO.getGenre())
         .build();
 
-    return mapper.toBookResponseDTO(bookRepository.save(newBook));
+    Book savedBook = bookRepository.save(newBook);
+    log.info("Book created successfully with ID: {}", savedBook.getId());
+    return mapper.toBookResponseDTO(savedBook);
   }
 
   @Transactional
   public BookResponseDTO updateBook(UUID id, BookRequestDTO bookRequestDTO) {
+    log.info("Updating book with ID: {}", id);
     Book updatedBook = findBookById(id);
-
+    
+    log.debug("Updating book details - old name: {}, new name: {}", updatedBook.getName(), bookRequestDTO.getName());
     updatedBook.setIsbn(bookRequestDTO.getIsbn());
     updatedBook.setName(bookRequestDTO.getName());
     updatedBook.setAuthor(bookRequestDTO.getAuthor());
@@ -111,46 +137,70 @@ public class BookServiceImpl implements BookService {
     updatedBook.setNumberOfPages(bookRequestDTO.getNumberOfPages());
     updatedBook.setGenre(bookRequestDTO.getGenre());
 
-    return mapper.toBookResponseDTO(bookRepository.save(updatedBook));
+    Book savedBook = bookRepository.save(updatedBook);
+    log.info("Book updated successfully: {}", savedBook.getName());
+    return mapper.toBookResponseDTO(savedBook);
   }
 
   @Transactional
   public void updateBookQuantity(UUID id, int change) {
+    log.debug("Updating book quantity - ID: {}, change: {}", id, change);
     Book book = bookRepository.findById(id)
-        .orElseThrow(() -> new BookNotFoundException(id));
+        .orElseThrow(() -> {
+          log.warn("Book not found with ID: {}", id);
+          return new BookNotFoundException(id);
+        });
 
-    int newQuantity = book.getAvailableQuantity() + change;
+    int currentQuantity = book.getAvailableQuantity();
+    int newQuantity = currentQuantity + change;
+    log.debug("Book: {}, current quantity: {}, new quantity: {}", book.getName(), currentQuantity, newQuantity);
 
-    if (newQuantity < 0)
+    if (newQuantity < 0) {
+      log.warn("Not enough books available for book with ID: {}", id);
       throw new NotEnoughBooksAvailableException();
+    }
 
     book.setAvailableQuantity(newQuantity);
     bookRepository.save(book);
+    log.info("Book quantity updated successfully - ID: {}, new quantity: {}", id, newQuantity);
   }
 
   @Transactional
   public BookResponseDTO updateBookAvailableQuantity(UUID id, BookQuantityUpdateDTO quantityUpdateDTO) {
+    log.info("Updating book available quantity - ID: {}, new quantity: {}", id, quantityUpdateDTO.getAvailableQuantity());
     Book book = findBookById(id);
     
     // Validate that the available quantity is not greater than total quantity
     if (quantityUpdateDTO.getAvailableQuantity() > book.getQuantity()) {
+      log.warn("Available quantity ({}) exceeds total quantity ({}) for book ID: {}", 
+               quantityUpdateDTO.getAvailableQuantity(), book.getQuantity(), id);
       throw new IllegalArgumentException("Available quantity cannot exceed total quantity");
     }
     
     // Validate that the available quantity is not negative
     if (quantityUpdateDTO.getAvailableQuantity() < 0) {
+      log.warn("Negative available quantity ({}) provided for book ID: {}", 
+               quantityUpdateDTO.getAvailableQuantity(), id);
       throw new IllegalArgumentException("Available quantity cannot be negative");
     }
     
     book.setAvailableQuantity(quantityUpdateDTO.getAvailableQuantity());
-    return mapper.toBookResponseDTO(bookRepository.save(book));
+    Book savedBook = bookRepository.save(book);
+    log.info("Book available quantity updated successfully - ID: {}, new quantity: {}", id, savedBook.getAvailableQuantity());
+    return mapper.toBookResponseDTO(savedBook);
   }
 
   @Transactional
   public void deleteBook(UUID id) {
+    log.info("Deleting book with ID: {}", id);
     Book book = bookRepository.findById(id)
-        .orElseThrow(() -> new BookNotFoundException(id));
+        .orElseThrow(() -> {
+          log.warn("Cannot delete: Book not found with ID: {}", id);
+          return new BookNotFoundException(id);
+        });
 
+    log.debug("Found book to delete: {}", book.getName());
     bookRepository.delete(book);
+    log.info("Book deleted successfully: {}", book.getName());
   }
 }

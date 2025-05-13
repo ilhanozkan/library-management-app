@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
 import org.springframework.data.domain.Pageable;
@@ -25,12 +26,14 @@ import java.util.UUID;
 @Tag(name = "User Operations")
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
   private final UserServiceImpl userService;
 
   @Autowired
   public UserController(UserServiceImpl userService) {
     this.userService = userService;
+    log.info("UserController initialized");
   }
 
   @Operation(summary = "Get all users with pagination", description = "Retrieves a paginated list of all library users")
@@ -40,9 +43,14 @@ public class UserController {
   @Description("Fetch all users")
   @GetMapping
   public PagedResponse<UserResponseDTO> getUsersPaged(@PageableDefault(size = 10) Pageable pageable) {
+    log.info("Request to get all users with pagination - page: {}, size: {}", pageable.getPageNumber(), pageable.getPageSize());
     try {
-      return userService.getUsers(pageable);
+      PagedResponse<UserResponseDTO> response = userService.getUsers(pageable);
+      log.info("Successfully retrieved {} users (page {} of {})", 
+               response.getContent().size(), response.getPage(), response.getTotalPages());
+      return response;
     } catch (RuntimeException e) {
+      log.error("Error retrieving users with pagination", e);
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -55,9 +63,13 @@ public class UserController {
   @Description("Fetch a user by id")
   @GetMapping("/{id}")
   public UserResponseDTO getUserById(@PathVariable UUID id) {
+    log.info("Request to get user by ID: {}", id);
     try {
-      return userService.getUserById(id);
+      UserResponseDTO user = userService.getUserById(id);
+      log.info("Successfully retrieved user: {}", user.username());
+      return user;
     } catch (RuntimeException e) {
+      log.error("Error retrieving user with ID: {}", id, e);
       throw new RuntimeException(e.getMessage());
     }
   }
@@ -74,11 +86,13 @@ public class UserController {
   )
   @PostMapping
   public ResponseEntity<?> createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
+    log.info("Request to create user with username: {}", userRequestDTO.username());
     try {
       UserResponseDTO response = userService.createUser(userRequestDTO);
-
+      log.info("User created successfully: {}", response.username());
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
     } catch (RuntimeException e) {
+      log.error("Error creating user: {}", e.getMessage());
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -91,10 +105,13 @@ public class UserController {
   @GetMapping("/email/{email}")
   public ResponseEntity<?> getUserByEmail(
       @Parameter(description = "Email of the user to retrieve") @PathVariable String email) {
+    log.info("Request to get user by email: {}", email);
     try {
       UserResponseDTO user = userService.getUserByEmail(email);
+      log.info("Successfully retrieved user by email: {}", user.username());
       return ResponseEntity.ok(user);
     } catch (Exception e) {
+      log.error("Error retrieving user with email: {}", email, e);
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
@@ -109,10 +126,13 @@ public class UserController {
   public ResponseEntity<UserResponseDTO> updateUser(
       @Parameter(description = "ID of the user to update") @PathVariable UUID id,
       @Parameter(description = "Updated user details") @Valid @RequestBody UserRequestDTO userRequestDTO) {
+    log.info("Request to update user with ID: {}", id);
     try {
       UserResponseDTO updatedUser = userService.updateUser(id, userRequestDTO);
+      log.info("User updated successfully: {}", updatedUser.username());
       return ResponseEntity.ok(updatedUser);
     } catch (Exception e) {
+      log.error("Error updating user with ID: {}", id, e);
       return ResponseEntity.notFound().build();
     }
   }
@@ -125,10 +145,13 @@ public class UserController {
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteUser(
       @Parameter(description = "ID of the user to delete") @PathVariable UUID id) {
+    log.info("Request to delete user with ID: {}", id);
     try {
       userService.deleteUser(id);
+      log.info("User deleted successfully: {}", id);
       return ResponseEntity.ok().build();
     } catch (Exception e) {
+      log.error("Error deleting user with ID: {}", id, e);
       return ResponseEntity.notFound().build();
     }
   }
@@ -141,10 +164,13 @@ public class UserController {
   @PutMapping("/{id}/deactivate")
   public ResponseEntity<UserResponseDTO> deactivateUser(
       @Parameter(description = "ID of the user to deactivate") @PathVariable UUID id) {
+    log.info("Request to deactivate user with ID: {}", id);
     try {
       UserResponseDTO deactivatedUser = userService.deactivateUser(id);
+      log.info("User deactivated successfully: {}", deactivatedUser.username());
       return ResponseEntity.ok(deactivatedUser);
     } catch (Exception e) {
+      log.error("Error deactivating user with ID: {}", id, e);
       return ResponseEntity.notFound().build();
     }
   }
