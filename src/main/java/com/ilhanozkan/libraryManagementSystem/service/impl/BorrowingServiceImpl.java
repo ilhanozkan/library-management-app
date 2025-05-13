@@ -11,6 +11,7 @@ import com.ilhanozkan.libraryManagementSystem.model.dto.response.BorrowingRespon
 import com.ilhanozkan.libraryManagementSystem.model.entity.Book;
 import com.ilhanozkan.libraryManagementSystem.model.entity.Borrowing;
 import com.ilhanozkan.libraryManagementSystem.model.entity.User;
+import com.ilhanozkan.libraryManagementSystem.model.entity.UserPrincipal;
 import com.ilhanozkan.libraryManagementSystem.model.enums.UserStatus;
 import com.ilhanozkan.libraryManagementSystem.model.mapper.BorrowingResponseDTOMapper;
 import com.ilhanozkan.libraryManagementSystem.repository.BookRepository;
@@ -25,6 +26,9 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -137,6 +141,17 @@ public class BorrowingServiceImpl implements BorrowingService {
             return new BorrowingNotFoundException(id);
           }
       );
+
+      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+      User user = userPrincipal.getUser();
+
+      // If the user is not the borrower or user role is not librarian, return an error
+      if (!borrowing.getUser().getId().equals(user.getId()) && !userPrincipal.hasRole("LIBRARIAN")) {
+        log.warn("User with ID {} is not authorized to return this book. Borrower ID: {}",
+                 user.getId(), borrowing.getUser().getId());
+        throw new AccessDeniedException("User is not authorized to return this book");
+      }
 
       if (borrowing.getReturned()) {
         log.warn("Book already returned for borrowing ID: {}", id);

@@ -88,6 +88,28 @@ public class BorrowingController {
     return activeBorrowings;
   }
 
+  @Operation(summary = "Create new borrowing for librarians", description = "Creates a new book borrowing")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully created borrowing"),
+      @ApiResponse(responseCode = "400", description = "Invalid input or book not available"),
+      @ApiResponse(responseCode = "403", description = "Access denied")
+  })
+  @PostMapping("/librarian")
+  @PreAuthorize("hasRole('LIBRARIAN')")
+  public ResponseEntity<?> createBorrowing(@ModelAttribute BorrowingRequestDTO borrowingRequestDTO) {
+    log.info("Request to create borrowing - Book ID: {}, User ID: {}", 
+             borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId());
+    try {
+      BorrowingResponseDTO borrowing = borrowingService.createBorrowing(borrowingRequestDTO);
+      log.info("Librarian user created a new borrowing successfully with ID: {}", borrowing.id());
+      return ResponseEntity.ok(borrowing);
+    } catch (RuntimeException e) {
+      log.error("Librarian user get an error while creating borrowing - Book ID: {}, User ID: {}: {}",
+                borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId(), e.getMessage());
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
+  }
+
   @Operation(summary = "Create new borrowing", description = "Creates a new book borrowing")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "Successfully created borrowing"),
@@ -95,17 +117,24 @@ public class BorrowingController {
       @ApiResponse(responseCode = "403", description = "Access denied")
   })
   @PostMapping
-  @PreAuthorize("hasRole('LIBRARIAN')")
-  public ResponseEntity<?> createBorrowing(@ModelAttribute BorrowingRequestDTO borrowingRequestDTO) {
-    log.info("Request to create borrowing - Book ID: {}, User ID: {}", 
-             borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId());
+  public ResponseEntity<?> createBorrowingPatrons(
+      @RequestParam @Parameter(description = "Book ID") UUID bookId
+  ) {
+    log.info("User request to create borrowing - Book ID: {}", bookId);
+
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    User user = userPrincipal.getUser();
+
     try {
+      BorrowingRequestDTO borrowingRequestDTO = new BorrowingRequestDTO(bookId, user.getId());
       BorrowingResponseDTO borrowing = borrowingService.createBorrowing(borrowingRequestDTO);
+
       log.info("Borrowing created successfully with ID: {}", borrowing.id());
       return ResponseEntity.ok(borrowing);
     } catch (RuntimeException e) {
-      log.error("Error creating borrowing - Book ID: {}, User ID: {}: {}", 
-                borrowingRequestDTO.getBookId(), borrowingRequestDTO.getUserId(), e.getMessage());
+      log.error("Error creating borrowing - Book ID: {}, User ID: {}: {}",
+          bookId, user.getId(), e.getMessage());
       return ResponseEntity.badRequest().body(e.getMessage());
     }
   }
