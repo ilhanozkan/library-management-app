@@ -34,8 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.List;
 import java.util.UUID;
 
@@ -128,6 +126,10 @@ public class BorrowingServiceImpl implements BorrowingService {
       borrowing.setUser(user);
 
       Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
+      // Stream book availability to update the book's available quantity
+      bookService.publishBookAvailabilityEvent(book);
+
       log.info("Borrowing created successfully with ID: {}", savedBorrowing.getId());
       return mapper.toBorrowingResponseDTO(savedBorrowing);
   }
@@ -164,6 +166,10 @@ public class BorrowingServiceImpl implements BorrowingService {
       bookService.updateBookQuantity(borrowing.getBook().getId(), 1);
 
       Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
+      // Stream book availability to update the book's available quantity
+      bookService.publishBookAvailabilityEvent(borrowing.getBook());
+
       log.info("Book returned successfully for borrowing ID: {}", id);
       return mapper.toBorrowingResponseDTO(savedBorrowing);
   }

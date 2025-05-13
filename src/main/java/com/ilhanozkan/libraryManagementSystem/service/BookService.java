@@ -4,6 +4,7 @@ import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpda
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.PagedResponse;
+import com.ilhanozkan.libraryManagementSystem.model.entity.Book;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -19,4 +20,5 @@ public interface BookService {
   public void updateBookQuantity(UUID id, int change);
   public BookResponseDTO updateBookAvailableQuantity(UUID id, BookQuantityUpdateDTO quantityUpdateDTO);
   public void deleteBook(UUID id);
+  public void publishBookAvailabilityEvent(Book book);
 }

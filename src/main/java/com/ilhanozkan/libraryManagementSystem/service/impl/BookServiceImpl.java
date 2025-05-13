@@ -2,6 +2,7 @@ package com.ilhanozkan.libraryManagementSystem.service.impl;
 
 import com.ilhanozkan.libraryManagementSystem.common.exception.book.BookNotFoundException;
 import com.ilhanozkan.libraryManagementSystem.common.exception.book.NotEnoughBooksAvailableException;
+import com.ilhanozkan.libraryManagementSystem.model.dto.event.BookAvailabilityEvent;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookQuantityUpdateDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.request.BookRequestDTO;
 import com.ilhanozkan.libraryManagementSystem.model.dto.response.BookResponseDTO;
@@ -11,6 +12,7 @@ import com.ilhanozkan.libraryManagementSystem.model.entity.Book;
 import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
 import com.ilhanozkan.libraryManagementSystem.model.mapper.BookResponseDTOMapper;
 import com.ilhanozkan.libraryManagementSystem.repository.BookRepository;
+import com.ilhanozkan.libraryManagementSystem.service.BookAvailabilityPublisher;
 import com.ilhanozkan.libraryManagementSystem.service.BookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +29,25 @@ import java.util.UUID;
 public class BookServiceImpl implements BookService {
   private final BookRepository bookRepository;
   private final BookResponseDTOMapper mapper = BookResponseDTOMapper.INSTANCE;
+  private final BookAvailabilityPublisher bookAvailabilityPublisher;
 
   @Autowired
-  public BookServiceImpl(BookRepository bookRepository) {
+  public BookServiceImpl(BookRepository bookRepository, BookAvailabilityPublisher bookAvailabilityPublisher) {
     this.bookRepository = bookRepository;
+    this.bookAvailabilityPublisher = bookAvailabilityPublisher;
     log.info("BookServiceImpl initialized");
+  }
+
+  public void publishBookAvailabilityEvent(Book book) {
+    log.debug("Publishing book availability event for book ID: {}", book.getId());
+    BookAvailabilityEvent event = BookAvailabilityEvent.create(
+        book.getId(),
+        book.getName(),
+        book.getIsbn(),
+        book.getQuantity(),
+        book.getAvailableQuantity()
+    );
+    bookAvailabilityPublisher.publishEvent(event);
   }
 
   public PagedResponse<BookResponseDTO> getAllBooks(Pageable pageable) {
@@ -120,6 +136,10 @@ public class BookServiceImpl implements BookService {
 
     Book savedBook = bookRepository.save(newBook);
     log.info("Book created successfully with ID: {}", savedBook.getId());
+    
+    // Publish event for the new book
+    publishBookAvailabilityEvent(savedBook);
+    
     return mapper.toBookResponseDTO(savedBook);
   }
 
@@ -127,6 +147,10 @@ public class BookServiceImpl implements BookService {
   public BookResponseDTO updateBook(UUID id, BookRequestDTO bookRequestDTO) {
     log.info("Updating book with ID: {}", id);
     Book updatedBook = findBookById(id);
+    
+    // Save old values to check if availability changes
+    int oldQuantity = updatedBook.getQuantity();
+    int oldAvailableQuantity = updatedBook.getAvailableQuantity();
     
     log.debug("Updating book details - old name: {}, new name: {}", updatedBook.getName(), bookRequestDTO.getName());
     updatedBook.setIsbn(bookRequestDTO.getIsbn());
@@ -139,6 +163,11 @@ public class BookServiceImpl implements BookService {
 
     Book savedBook = bookRepository.save(updatedBook);
     log.info("Book updated successfully: {}", savedBook.getName());
+    
+    // Publish event if availability changed
+    if (oldQuantity != savedBook.getQuantity() || oldAvailableQuantity != savedBook.getAvailableQuantity())
+        publishBookAvailabilityEvent(savedBook);
+    
     return mapper.toBookResponseDTO(savedBook);
   }
 
@@ -161,8 +190,11 @@ public class BookServiceImpl implements BookService {
     }
 
     book.setAvailableQuantity(newQuantity);
-    bookRepository.save(book);
+    Book savedBook = bookRepository.save(book);
     log.info("Book quantity updated successfully - ID: {}, new quantity: {}", id, newQuantity);
+    
+    // Publish event for quantity change
+    publishBookAvailabilityEvent(savedBook);
   }
 
   @Transactional
@@ -184,9 +216,18 @@ public class BookServiceImpl implements BookService {
       throw new IllegalArgumentException("Available quantity cannot be negative");
     }
     
+    // Check if availability is changing
+    boolean availabilityChanged = book.getAvailableQuantity() != quantityUpdateDTO.getAvailableQuantity();
+    
     book.setAvailableQuantity(quantityUpdateDTO.getAvailableQuantity());
     Book savedBook = bookRepository.save(book);
     log.info("Book available quantity updated successfully - ID: {}, new quantity: {}", id, savedBook.getAvailableQuantity());
+    
+    // Publish event if availability changed
+    if (availabilityChanged) {
+        publishBookAvailabilityEvent(savedBook);
+    }
+    
     return mapper.toBookResponseDTO(savedBook);
   }
 
