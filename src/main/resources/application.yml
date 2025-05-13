@@ -27,7 +27,10 @@ spring:
     name: library-management-app
 
 logging:
+  file:
+    name: logs/app.log
   level:
+    root: info
     org:
       hibernate:
         SQL: DEBUG
@@ -35,3 +38,8 @@ logging:
           descriptor:
             sql:
               BasicBinder: TRACE
+
+# JWT Configuration
+jwt:
+  secret: OyF0epYib3QdHHfUc/PG6wjnkGuWZVVnDWcmxbL5tccsJ/xglg6fMWpr222kTWsc
+  expiration: 86400000  # 24 hours in milliseconds

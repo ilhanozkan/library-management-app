@@ -1,6 +1,7 @@
 package com.ilhanozkan.libraryManagementSystem.model.entity;
 
 import com.ilhanozkan.libraryManagementSystem.model.enums.UserRole;
+import com.ilhanozkan.libraryManagementSystem.model.enums.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,7 @@ public class User {
   private String username;
 
   @Column(nullable = false, unique = true)
-  @Email
+  @Email(message = "Email should be valid")
   private String email;
 
   @Column(nullable = false)
@@ -40,11 +41,18 @@ public class User {
   @Column(nullable = false)
   private UserRole role;
 
+  @Column(nullable = false)
+  private UserStatus status;
+
   @PrePersist
   public void onCreate() {
     if (this.id == null)
       this.id = UUID.randomUUID();
 
+    if (this.status == null)
+      this.status = UserStatus.ACTIVE;
 
+    if (this.role == null)
+      this.role = UserRole.PATRON;
   }
 }

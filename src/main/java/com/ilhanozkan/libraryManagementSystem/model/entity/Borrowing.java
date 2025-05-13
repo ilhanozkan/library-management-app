@@ -47,7 +47,7 @@ public class Borrowing {
   private LocalDateTime updatedAt;
 
   // Expiration duration (days)
-  int expirationDuration = 14;
+  private static final int expirationDuration = 14;
 
   @PrePersist
   public void onCreate() {
@@ -60,5 +60,11 @@ public class Borrowing {
     // Set default due date to 14 days from now
     if (dueDate == null)
       dueDate = LocalDateTime.now().plusDays(expirationDuration);
+
+    if (returned == null)
+      returned = false;
+
+    if (updatedAt == null)
+      updatedAt = LocalDateTime.now();
   }
 }
