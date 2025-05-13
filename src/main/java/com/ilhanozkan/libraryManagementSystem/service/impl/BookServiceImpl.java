@@ -241,7 +241,7 @@ public class BookServiceImpl implements BookService {
         });
 
     log.debug("Found book to delete: {}", book.getName());
-    bookRepository.delete(book);
+    bookRepository.deleteById(id);
     log.info("Book deleted successfully: {}", book.getName());
   }
 }

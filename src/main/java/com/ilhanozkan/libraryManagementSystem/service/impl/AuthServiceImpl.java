@@ -86,14 +86,27 @@ public class AuthServiceImpl implements AuthService {
       String role = userDetails.getAuthorities().stream()
           .findFirst()
           .map(a -> a.getAuthority().replace("ROLE_", ""))
-          .orElse(null);
+          .orElse("PATRON");
       
       log.debug("User '{}' has role: {}", userDetails.getUsername(), role);
+
+      // Map "USER" role to PATRON if needed
+      UserRole userRole;
+      if ("USER".equals(role)) {
+        userRole = UserRole.PATRON;
+      } else {
+        try {
+          userRole = UserRole.valueOf(role);
+        } catch (IllegalArgumentException e) {
+          log.warn("Unknown role '{}', defaulting to PATRON", role);
+          userRole = UserRole.PATRON;
+        }
+      }
 
       LoginResponseDTO loginResponseDTO = LoginResponseDTO.builder()
           .token(token)
           .username(userDetails.getUsername())
-          .role(UserRole.valueOf(role))
+          .role(userRole)
           .build();
 
       return ResponseEntity.ok(loginResponseDTO);

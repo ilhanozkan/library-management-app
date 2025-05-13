@@ -119,15 +119,21 @@ public class BorrowingServiceImpl implements BorrowingService {
         throw new BookNotAvailableException(borrowingRequestDTO.getBookId());
       }
 
+      // Update the available quantity directly
+      book.setAvailableQuantity(book.getAvailableQuantity() - 1);
+      bookRepository.save(book);
+
       Borrowing borrowing = new Borrowing();
       borrowing.setBorrowDate(LocalDateTime.now());
       borrowing.setDueDate(LocalDateTime.now().plusDays(14));
       borrowing.setBook(book);
       borrowing.setUser(user);
+      borrowing.setReturned(false);
+      borrowing.setUpdatedAt(LocalDateTime.now());
 
       Borrowing savedBorrowing = borrowingRepository.save(borrowing);
 
-      // Stream book availability to update the book's available quantity
+      // Stream book availability event after the direct update
       bookService.publishBookAvailabilityEvent(book);
 
       log.info("Borrowing created successfully with ID: {}", savedBorrowing.getId());
@@ -162,12 +168,15 @@ public class BorrowingServiceImpl implements BorrowingService {
 
       borrowing.setReturned(true);
       borrowing.setReturnDate(LocalDateTime.now());
-      log.debug("Updating book quantity for book ID: {}", borrowing.getBook().getId());
-      bookService.updateBookQuantity(borrowing.getBook().getId(), 1);
+      
+      // Update the book's available quantity directly
+      Book book = borrowing.getBook();
+      book.setAvailableQuantity(book.getAvailableQuantity() + 1);
+      bookRepository.save(book);
 
       Borrowing savedBorrowing = borrowingRepository.save(borrowing);
 
-      // Stream book availability to update the book's available quantity
+      // Stream book availability event
       bookService.publishBookAvailabilityEvent(borrowing.getBook());
 
       log.info("Book returned successfully for borrowing ID: {}", id);
@@ -186,13 +195,18 @@ public class BorrowingServiceImpl implements BorrowingService {
     if (!borrowing.getReturned()) {
       log.debug("Book was not returned, updating available quantity for book ID: {}", 
                 borrowing.getBook().getId());
-      bookService.updateBookQuantity(borrowing.getBook().getId(), 1);
+      // Update the book's available quantity directly
+      Book book = borrowing.getBook();
+      book.setAvailableQuantity(book.getAvailableQuantity() + 1);
+      bookRepository.save(book);
+      
+      // Also publish the event
+      bookService.publishBookAvailabilityEvent(book);
     }
 
     borrowingRepository.delete(borrowing);
     log.info("Borrowing deleted successfully: {}", id);
   }
-
 
   @Transactional
   public byte[] getOverdueBooksPDFReport() {

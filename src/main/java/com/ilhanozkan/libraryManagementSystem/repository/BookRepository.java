@@ -14,7 +14,7 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
          "(:title IS NULL OR b.name ILIKE CONCAT('%', :title, '%')) AND " +
          "(:author IS NULL OR b.author ILIKE CONCAT('%', :author, '%')) AND " +
          "(:isbn IS NULL OR b.isbn ILIKE CONCAT('%', :isbn, '%')) AND " +
-         "(:genre IS NULL OR b.genre::text = :genre)",
+         "(:genre IS NULL OR CAST(b.genre AS INTEGER) = CAST(:genre AS INTEGER))",
          nativeQuery = true)
   List<Book> searchBooks(@Param("title") String title, 
                          @Param("author") String author, 
