@@ -1,0 +1,985 @@
+{
+	"info": {
+		"_postman_id": "c152ab59-b20d-46ac-94b0-549a4c76bad6",
+		"name": "Library Management System",
+		"description": "A comprehensive collection for testing the Library Management System API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20492318"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Password123!\",\n    \"name\": \"Test\",\n    \"surname\": \"User\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user to the system"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+									"console.log(\"Token saved: \" + jsonData.token);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"librarian\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login to the system and retrieve a JWT token"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints for user registration and login"
+		},
+		{
+			"name": "Books",
+			"item": [
+				{
+					"name": "Get All Books",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/books?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get a paginated list of all books"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Books",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/books/search?title=&author=&isbn=&genre=",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "title",
+									"value": ""
+								},
+								{
+									"key": "author",
+									"value": ""
+								},
+								{
+									"key": "isbn",
+									"value": ""
+								},
+								{
+									"key": "genre",
+									"value": ""
+								}
+							]
+						},
+						"description": "Search books by title, author, ISBN, or genre"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Book by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"{{book_id}}"
+							]
+						},
+						"description": "Get book details by book ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Book by ISBN",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/books/isbn/9781234567890",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"isbn",
+								"9781234567890"
+							]
+						},
+						"description": "Get book details by ISBN"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Book (Librarian)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.id) {",
+									"    pm.collectionVariables.set(\"book_id\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Book\",\n    \"isbn\": \"9795195964643\",\n    \"author\": \"Test Author\",\n    \"publisher\": \"string\",\n    \"numberOfPages\": 100,\n    \"quantity\": 5,\n    \"genre\": \"ACTION\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/books",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books"
+							]
+						},
+						"description": "Create a new book (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Book (Librarian)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Test Book\",\n    \"isbn\": \"9795195964643\",\n    \"author\": \"Test Author\",\n    \"publisher\": \"string\",\n    \"numberOfPages\": 100,\n    \"quantity\": 5,\n    \"genre\": \"ACTION\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"{{book_id}}"
+							]
+						},
+						"description": "Update an existing book (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Book Quantity (Librarian)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"availableQuantity\": 4\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/books/{{book_id}}/available-quantity",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"{{book_id}}",
+								"available-quantity"
+							]
+						},
+						"description": "Update book available quantity (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book (Librarian)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/books/{{book_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"books",
+								"{{book_id}}"
+							]
+						},
+						"description": "Delete a book (requires Librarian role)"
+					},
+					"response": []
+				}
+			],
+			"description": "Book management endpoints"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get a paginated list of all users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Get user details by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by Email",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/email/testuser@example.com",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"email",
+								"testuser@example.com"
+							]
+						},
+						"description": "Get user details by email"
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.id) {",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"string\",\n  \"email\": \"string@string.com\",\n  \"password\": \"string123\",\n  \"name\": \"string\",\n  \"surname\": \"string\",\n  \"role\": \"LIBRARIAN\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Create a new user (alternative to registration)"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"string\",\n  \"email\": \"string@string.com\",\n  \"password\": \"string123\",\n  \"name\": \"updated string\",\n  \"surname\": \"updated string\",\n  \"role\": \"LIBRARIAN\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Update user details"
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}/deactivate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}",
+								"deactivate"
+							]
+						},
+						"description": "Deactivate a user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{user_id}}"
+							]
+						},
+						"description": "Delete a user account"
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "Borrowings",
+			"item": [
+				{
+					"name": "Get All Borrowings (Librarian)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings"
+							]
+						},
+						"description": "Get all borrowings (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User's Borrowings (Librarian)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/user/{{user_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"user",
+								"{{user_id}}"
+							]
+						},
+						"description": "Get borrowings for a specific user (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User's Active Borrowings (Librarian)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/user/{{user_id}}/active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"user",
+								"{{user_id}}",
+								"active"
+							]
+						},
+						"description": "Get active borrowings for a specific user (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Borrowing History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/my-history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"my-history"
+							]
+						},
+						"description": "Get borrowing history for the authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Active Borrowings",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/my-active",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"my-active"
+							]
+						},
+						"description": "Get active borrowings for the authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Borrowing (For Patron)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.id) {",
+									"    pm.collectionVariables.set(\"borrowing_id\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings?bookId={{book_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings"
+							],
+							"query": [
+								{
+									"key": "bookId",
+									"value": "{{book_id}}"
+								}
+							]
+						},
+						"description": "Create a borrowing for the authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Borrowing (Librarian)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData && jsonData.id) {",
+									"    pm.collectionVariables.set(\"borrowing_id\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "bookId",
+									"value": "{{book_id}}",
+									"type": "text"
+								},
+								{
+									"key": "userId",
+									"value": "{{user_id}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/librarian",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"librarian"
+							]
+						},
+						"description": "Create a borrowing for any user (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Return Book",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/{{borrowing_id}}/return",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"{{borrowing_id}}",
+								"return"
+							]
+						},
+						"description": "Return a borrowed book"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Borrowing (Librarian)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/{{borrowing_id}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"{{borrowing_id}}"
+							]
+						},
+						"description": "Delete a borrowing record (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Overdue Books Text Report (Librarian)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/overdue-report",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"overdue-report"
+							]
+						},
+						"description": "Generate a text report of overdue books (requires Librarian role)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Overdue Books PDF Report (Librarian)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/borrowings/overdue-pdf-report",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"borrowings",
+								"overdue-pdf-report"
+							]
+						},
+						"description": "Generate a PDF report of overdue books (requires Librarian role)"
+					},
+					"response": []
+				}
+			],
+			"description": "Borrowing management endpoints"
+		},
+		{
+			"name": "Reactive",
+			"item": [
+				{
+					"name": "Books Availability Stream",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzdHJpbmciLCJpYXQiOjE3NDcwOTYyMTAsImV4cCI6MTc0NzE4MjYxMH0.-fcsBYYtuoaXfYv0BpGaPBxT1bU8CCWxfs2cw9MM9rUPIBDX_swYhX3cav8UUKXsQVTGw-k_O87JV9zjCNki1w",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/stream+json",
+								"type": "text"
+							},
+							{
+								"key": "Accept",
+								"value": "text/event-stream",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reactive/books/availability/stream",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reactive",
+								"books",
+								"availability",
+								"stream"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "book_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "borrowing_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
