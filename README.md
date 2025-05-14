@@ -93,7 +93,7 @@ This Library Management System is a comprehensive Spring Boot application design
 
 3. Run the application:
    ```bash
-   java -jar target/library-management-app-0.0.1-SNAPSHOT.jar
+   java -jar target/libraryManagementSystem-0.0.1-SNAPSHOT.jar
    ```
 
 4. Access the application at: http://localhost:8080/api/v1/
