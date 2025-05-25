@@ -39,21 +39,9 @@ public class ReactiveBookController {
             0, 
             System.currentTimeMillis()
         );
-        
-        // Create a heartbeat to keep the connection alive
-        Flux<BookAvailabilityEvent> heartbeat = Flux.interval(Duration.ofSeconds(30))
-            .map(tick -> new BookAvailabilityEvent(
-                UUID.randomUUID(),
-                "HEARTBEAT",
-                "000-0000000000",
-                0,
-                0,
-                System.currentTimeMillis()
-            ));
-        
+
         // Combine the initial event, heartbeat, and the actual events
         return Flux.just(connectionEvent)
-            .concatWith(bookAvailabilityPublisher.getEventStream())
-            .mergeWith(heartbeat);
+            .concatWith(bookAvailabilityPublisher.getEventStream());
     }
 } 
