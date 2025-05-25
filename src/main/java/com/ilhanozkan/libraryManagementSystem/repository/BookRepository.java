@@ -1,7 +1,7 @@
 package com.ilhanozkan.libraryManagementSystem.repository;
 
 import com.ilhanozkan.libraryManagementSystem.model.entity.Book;
-import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,10 +16,10 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
          "(:isbn IS NULL OR b.isbn ILIKE CONCAT('%', :isbn, '%')) AND " +
          "(:genre IS NULL OR CAST(b.genre AS INTEGER) = CAST(:genre AS INTEGER))",
          nativeQuery = true)
-  List<Book> searchBooks(@Param("title") String title, 
-                         @Param("author") String author, 
-                         @Param("isbn") String isbn, 
-                         @Param("genre") String genre);
+  List<Book> searchBooks(@Param("title") String title,
+                         @Param("author") String author,
+                         @Param("isbn") String isbn,
+                         @Param("genre") String genre, Pageable pageable);
   
   Book findByIsbn(String isbn);
 }

@@ -67,13 +67,22 @@ public class BookServiceImpl implements BookService {
   }
 
   // Search books by title, author, ISBN, or genre
-  public List<BookResponseDTO> searchBooks(String title, String author, String isbn, String genre) {
+  public PagedResponse<BookResponseDTO> searchBooks(String title, String author, String isbn, String genre, Pageable pageable) {
     log.debug("Searching books with parameters - title: {}, author: {}, isbn: {}, genre: {}", title, author, isbn, genre);
-    
     // If all parameters are null, return all books
     if (title == null && author == null && isbn == null && genre == null) {
+      Page<Book> booksPage = bookRepository.findAll(pageable);
+      List<Book> bookResponses = booksPage.getContent();
+
       log.debug("No search parameters provided, returning all books");
-      return mapper.toBookResponseDTOList(bookRepository.findAll());
+      return PagedResponse.<BookResponseDTO>builder()
+          .content(mapper.toBookResponseDTOList(bookResponses))
+          .page(booksPage.getNumber())
+          .size(booksPage.getSize())
+          .totalElements(booksPage.getTotalElements())
+          .totalPages(booksPage.getTotalPages())
+          .last(booksPage.isLast())
+          .build();
     }
     
     // Convert genre string to enum ordinal value if provided
@@ -86,13 +95,27 @@ public class BookServiceImpl implements BookService {
       } catch (IllegalArgumentException e) {
         // Invalid genre provided, will return empty list
         log.warn("Invalid genre provided: {}", genre);
-        return List.of();
+        return PagedResponse.<BookResponseDTO>builder()
+            .content(List.of())
+            .page(0)
+            .size(0)
+            .totalElements(0)
+            .totalPages(0)
+            .last(true)
+            .build();
       }
     }
     
-    List<Book> books = bookRepository.searchBooks(title, author, isbn, genreValue);
+    List<Book> books = bookRepository.searchBooks(title, author, isbn, genreValue, pageable);
     log.debug("Found {} books matching the search criteria", books.size());
-    return mapper.toBookResponseDTOList(books);
+    return PagedResponse.<BookResponseDTO>builder()
+        .content(mapper.toBookResponseDTOList(books))
+        .page(pageable.getPageNumber())
+        .size(pageable.getPageSize())
+        .totalElements(books.size())
+        .totalPages((int) Math.ceil((double) books.size() / pageable.getPageSize()))
+        .last(books.size() < pageable.getPageSize())
+        .build();
   }
 
   private Book findBookById(UUID id) {

@@ -14,7 +14,7 @@ public interface BookService {
   public PagedResponse<BookResponseDTO> getAllBooks(Pageable pageable);
   public BookResponseDTO getBookById(UUID id);
   public BookResponseDTO getBookByIsbn(String isbn);
-  public List<BookResponseDTO> searchBooks(String title, String author, String isbn, String genre);
+  public PagedResponse<BookResponseDTO> searchBooks(String title, String author, String isbn, String genre, Pageable pageable);
   public BookResponseDTO createBook(BookRequestDTO bookRequestDTO);
   public BookResponseDTO updateBook(UUID id, BookRequestDTO bookRequestDTO);
   public void updateBookQuantity(UUID id, int change);

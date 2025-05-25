@@ -272,8 +272,8 @@ public class BookControllerIntegrationTest {
                 .param("title", "Hobbit")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name", is("The Hobbit")))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name", is("The Hobbit")))
                 .andDo(print());
 
         // Search by author
@@ -281,8 +281,8 @@ public class BookControllerIntegrationTest {
                 .param("author", "Test")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name", is("Test Book")))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].name", is("Test Book")))
                 .andDo(print());
     }
 } 
