@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.JDBCException;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +59,9 @@ public class BookController {
     ) {
         try {
             return ResponseEntity.ok(bookService.searchBooks(title, author, isbn, genre, pageable));
+        } catch (InvalidDataAccessResourceUsageException e) {
+            log.error("Database error while searching books", e);
+            return ResponseEntity.status(500).body("Server error occurred while searching books. Please try again later.");
         } catch (RuntimeException e) {
             log.error("Error searching books", e);
             return ResponseEntity.badRequest().body(e.getMessage());
