@@ -63,6 +63,12 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO) {
     log.info("Login attempt for username: {}", requestDTO.getUsername());
+
+    Map<String, Object> errorResponse = new HashMap<>();
+    errorResponse.put("success", false);
+    errorResponse.put("message", "Invalid username or password");
+    errorResponse.put("data", null);
+
     try {
       ResponseEntity<?> serviceResponse = authService.login(requestDTO);
       
@@ -79,11 +85,11 @@ public class AuthController {
         return ResponseEntity.ok(responseMap);
       } else {
         log.error("Login failed for username {}: {}", requestDTO.getUsername(), serviceResponse.getBody());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(serviceResponse.getBody());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
       }
     } catch (RuntimeException e) {
       log.error("Login failed for username {}: {}", requestDTO.getUsername(), e.getMessage());
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
   }
 }
