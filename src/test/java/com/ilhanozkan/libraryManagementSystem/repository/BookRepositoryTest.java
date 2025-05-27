@@ -5,11 +5,12 @@ import com.ilhanozkan.libraryManagementSystem.model.enums.BookGenre;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,6 +94,7 @@ public class BookRepositoryTest {
     @Test
     public void shouldSearchBooks() {
         // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         Book book1 = Book.builder()
                 .name("Harry Potter")
                 .isbn("9781234567890")
@@ -118,9 +120,9 @@ public class BookRepositoryTest {
         bookRepository.saveAll(List.of(book1, book2));
 
         // Act
-        List<Book> foundBooks = bookRepository.searchBooks("Harry", null, null, null);
-        List<Book> foundByAuthor = bookRepository.searchBooks(null, "Tolkien", null, null);
-        List<Book> foundByGenre = bookRepository.searchBooks(null, null, null, String.valueOf(BookGenre.FANTASY.ordinal()));
+        List<Book> foundBooks = bookRepository.searchBooks("Harry", null, null, null, pageable);
+        List<Book> foundByAuthor = bookRepository.searchBooks(null, "Tolkien", null, null, pageable);
+        List<Book> foundByGenre = bookRepository.searchBooks(null, null, null, String.valueOf(BookGenre.FANTASY.ordinal()), pageable);
 
         // Assert
         assertThat(foundBooks).hasSize(1);

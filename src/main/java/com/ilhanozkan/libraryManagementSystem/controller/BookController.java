@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.JDBCException;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -52,9 +54,14 @@ public class BookController {
             @Parameter(description = "Title to search for") @RequestParam(required = false) String title,
             @Parameter(description = "Author to search for") @RequestParam(required = false) String author,
             @Parameter(description = "ISBN to search for") @RequestParam(required = false) String isbn,
-            @Parameter(description = "Genre to search for (case sensitive, must match enum value)") @RequestParam(required = false) String genre) {
+            @Parameter(description = "Genre to search for (case sensitive, must match enum value)") @RequestParam(required = false) String genre,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
         try {
-            return ResponseEntity.ok(bookService.searchBooks(title, author, isbn, genre));
+            return ResponseEntity.ok(bookService.searchBooks(title, author, isbn, genre, pageable));
+        } catch (InvalidDataAccessResourceUsageException e) {
+            log.error("Database error while searching books", e);
+            return ResponseEntity.status(500).body("Server error occurred while searching books. Please try again later.");
         } catch (RuntimeException e) {
             log.error("Error searching books", e);
             return ResponseEntity.badRequest().body(e.getMessage());

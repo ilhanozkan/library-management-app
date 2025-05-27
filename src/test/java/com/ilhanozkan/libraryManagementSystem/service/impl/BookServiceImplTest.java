@@ -168,18 +168,19 @@ public class BookServiceImplTest {
     @Test
     void shouldSearchBooks() {
         // Arrange
-        given(bookRepository.searchBooks("Test", null, null, null))
+        Pageable pageable = PageRequest.of(0, 10);
+        given(bookRepository.searchBooks("Test", null, null, null, pageable))
                 .willReturn(Arrays.asList(book1, book2));
 
         // Act
-        List<BookResponseDTO> result = bookService.searchBooks("Test", null, null, null);
+        List<BookResponseDTO> result = bookService.searchBooks("Test", null, null, null, pageable).getContent();
 
         // Assert
         assertThat(result).hasSize(2);
         assertThat(result.get(0).name()).isEqualTo("Test Book 1");
         assertThat(result.get(1).name()).isEqualTo("Test Book 2");
         
-        verify(bookRepository, times(1)).searchBooks("Test", null, null, null);
+        verify(bookRepository, times(1)).searchBooks("Test", null, null, null, pageable);
     }
 
     @Test
