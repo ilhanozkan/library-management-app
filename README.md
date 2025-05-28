@@ -126,6 +126,38 @@ Docker Compose will set up:
 
 ## API Endpoints
 
+![Image](https://github.com/user-attachments/assets/bc43a0bb-02f9-48a7-b2d5-1ddb3ffd4b2e)
+
+![Image](https://github.com/user-attachments/assets/c9238a14-a28d-4320-84a6-da7d60a5a655)
+
+![Image](https://github.com/user-attachments/assets/07c66635-a5d0-4e9f-815a-52a46267e78b)
+
+![Image](https://github.com/user-attachments/assets/e777e52d-da0b-4b1f-a08b-05382a59f8e4)
+
+![Image](https://github.com/user-attachments/assets/e5619453-f35f-4cc6-bcb6-05239bbbc07d)
+
+![Image](https://github.com/user-attachments/assets/a43f0459-193c-4975-8650-21772b91cc23)
+
+![Image](https://github.com/user-attachments/assets/d910e33e-3331-48f8-8958-1cf392fbc039)
+
+![Image](https://github.com/user-attachments/assets/68407866-48d7-4e71-a495-72696d71f3e3)
+
+![Image](https://github.com/user-attachments/assets/5f3c0136-19bd-406c-bb68-c9873036cf0c)
+
+![Image](https://github.com/user-attachments/assets/0a8fd349-d3ad-41b7-8c32-246979cb7d93)
+
+![Image](https://github.com/user-attachments/assets/9e71f116-594e-409f-82b1-683da20bf1ab)
+
+![Image](https://github.com/user-attachments/assets/5818d399-ad00-408c-a46a-826f77bda473)
+
+![Image](https://github.com/user-attachments/assets/1fe56000-0c12-4c02-8e60-3d7eb03e7c72)
+
+![Image](https://github.com/user-attachments/assets/01f9a583-9e57-4ad5-9423-df1a1c9c9111)
+
+![Image](https://github.com/user-attachments/assets/37c8ccfe-4eaa-4762-9bcd-562cdff59d6b)
+
+![Image](https://github.com/user-attachments/assets/a5613b3e-56bc-4056-a560-60a4c9e67bbb)
+
 The application provides a RESTful API with the following main endpoints:
 
 ### Authentication
